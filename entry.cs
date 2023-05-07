@@ -51,6 +51,7 @@ public partial class entry : Node2D
                 {
                     GD.Print("drag stoped");
                     pad.endDrag(eventMouseButton.Position);
+                    pad.setGrid(GridType.Refresh);
                 }
                 GetViewport().SetInputAsHandled();
             }
@@ -95,6 +96,10 @@ public partial class entry : Node2D
         {
             GD.Print("sketchpad_clear occurred!");
             pad.clear();
+        }
+        else if (@event.IsActionPressed("sketchpad_grid_hexgon"))
+        {
+            pad.setGrid(GridType.Hexgon);
         }
     }
 }

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 public enum GridType
 {
-    Square, None,Refresh
+    Square, None,Refresh,Hexgon
 }
 public struct StrokeElement
 {
