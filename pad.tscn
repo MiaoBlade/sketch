@@ -1,0 +1,14 @@
+[gd_scene load_steps=4 format=3 uid="uid://dc1d2edf7xs4t"]
+
+[ext_resource type="Script" path="res://entry.cs" id="1_ln017"]
+[ext_resource type="Script" path="res://Canvas.cs" id="2_jtn6x"]
+[ext_resource type="Script" path="res://Grid.cs" id="3_4ujbw"]
+
+[node name="root" type="Node2D"]
+script = ExtResource("1_ln017")
+
+[node name="grid" type="Node2D" parent="."]
+script = ExtResource("3_4ujbw")
+
+[node name="canvas" type="Node2D" parent="."]
+script = ExtResource("2_jtn6x")
