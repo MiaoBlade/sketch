@@ -15,7 +15,7 @@ public class SketchPad
 
     public Canvas canvas;
     public Grid grid;
-
+    public UI ui;
     PadState state = PadState.Idle;
     public SketchPad()
     {
@@ -142,6 +142,7 @@ public class SketchPad
 
         grid.drawGrid(currentLayer);
         canvas.drawStroke(currentLayer);
+        ui.updateStatus(this);
     }
     public void prevPage()
     {
@@ -155,7 +156,14 @@ public class SketchPad
             currentLayer = layers[currentLayerID];
             grid.drawGrid(currentLayer);
             canvas.drawStroke(currentLayer);
+            ui.updateStatus(this);
         }
 
+    }
+    public void viewportChange(Rect2 vp_rect)
+    {
+        grid.drawGrid(currentLayer);
+        canvas.drawStroke(currentLayer);
+        ui.updateLayout(vp_rect);
     }
 }

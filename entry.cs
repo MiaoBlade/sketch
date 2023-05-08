@@ -3,6 +3,8 @@ using System;
 
 public partial class entry : Node2D
 {
+    [Export]
+    UI ui;
     public SketchPad pad;
     public override void _Ready()
     {
@@ -12,16 +14,19 @@ public partial class entry : Node2D
         Canvas canvas = GetNode<Canvas>("canvas");
         pad.canvas = canvas;
         pad.grid = GetNode<Grid>("grid");
+        pad.ui = ui;
+        GetViewport().SizeChanged += viewportChange;
+        GetWindow().MinSize=new Vector2I(640,480);
     }
 
     // Called every frame. 'delta' is the elapsed time since the previous frame.
     public override void _Process(double delta)
     {
-        GetWindow().Title = pad.currentLayer.elems.Count.ToString() + " " + pad.currentLayerID + "/" + pad.layers.Count;
+        GetWindow().Title = pad.currentLayer.elems.Count.ToString() + " " ;
     }
     public override void _Draw()
     {
-        DrawRect(GetViewportRect(), Color.Color8(250, 250, 255));
+        DrawRect(GetViewportRect(), Color.Color8(240, 240, 245));
     }
     public override void _UnhandledInput(InputEvent @event)
     {
@@ -56,22 +61,6 @@ public partial class entry : Node2D
                 }
                 GetViewport().SetInputAsHandled();
             }
-        }
-        else if (@event is InputEventMouseMotion eventMouseMotion)
-        {
-            if (eventMouseMotion.ButtonMask == MouseButtonMask.Left)
-            {
-                // GD.Print("drawing ", eventMouseMotion.Pressure);
-                pad.appendStroke(eventMouseMotion.Position, eventMouseMotion.Pressure);
-                GetViewport().SetInputAsHandled();
-            }
-            else if (eventMouseMotion.ButtonMask == MouseButtonMask.Middle)
-            {
-                pad.updateDrag(eventMouseMotion.Position);
-                pad.setGrid(GridType.Refresh);
-                GetViewport().SetInputAsHandled();
-            }
-
         }
         else if (@event is InputEventKey eventKey)
         {
@@ -108,5 +97,24 @@ public partial class entry : Node2D
         {
             pad.prevPage();
         }
+        else if (@event is InputEventMouseMotion eventMouseMotion)
+        {
+            if (eventMouseMotion.ButtonMask == MouseButtonMask.Left)
+            {
+                pad.appendStroke(eventMouseMotion.Position, eventMouseMotion.Pressure);
+                GetViewport().SetInputAsHandled();
+            }
+            else if (eventMouseMotion.ButtonMask == MouseButtonMask.Middle)
+            {
+                pad.updateDrag(eventMouseMotion.Position);
+                pad.setGrid(GridType.Refresh);
+                GetViewport().SetInputAsHandled();
+            }
+
+        }
+    }
+    void viewportChange()
+    {
+        pad.viewportChange(GetViewportRect());
     }
 }
