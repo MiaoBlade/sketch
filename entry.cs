@@ -17,6 +17,7 @@ public partial class entry : Node2D
     // Called every frame. 'delta' is the elapsed time since the previous frame.
     public override void _Process(double delta)
     {
+        GetWindow().Title = pad.currentLayer.elems.Count.ToString() + " " + pad.currentLayerID + "/" + pad.layers.Count;
     }
     public override void _Draw()
     {
@@ -62,8 +63,6 @@ public partial class entry : Node2D
             {
                 // GD.Print("drawing ", eventMouseMotion.Pressure);
                 pad.appendStroke(eventMouseMotion.Position, eventMouseMotion.Pressure);
-
-                GetWindow().Title = pad.currentLayer.elems.Count.ToString();
                 GetViewport().SetInputAsHandled();
             }
             else if (eventMouseMotion.ButtonMask == MouseButtonMask.Middle)
@@ -100,6 +99,14 @@ public partial class entry : Node2D
         else if (@event.IsActionPressed("sketchpad_grid_hexgon"))
         {
             pad.setGrid(GridType.Hexgon);
+        }
+        else if (@event.IsActionPressed("sketchpad_next"))
+        {
+            pad.nextPage();
+        }
+        else if (@event.IsActionPressed("sketchpad_prev"))
+        {
+            pad.prevPage();
         }
     }
 }

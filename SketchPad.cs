@@ -9,8 +9,8 @@ enum PadState
 }
 public class SketchPad
 {
-    List<SketchLayer> layers = new List<SketchLayer>();
-    int currentLayerID = 0;
+    public List<SketchLayer> layers = new List<SketchLayer>();
+    public int currentLayerID = 0;
     public SketchLayer currentLayer;
 
     public Canvas canvas;
@@ -126,5 +126,36 @@ public class SketchPad
     {
         currentLayer.clear();
         canvas.drawStroke(currentLayer);
+    }
+    public void nextPage()
+    {
+        if (state != PadState.Idle)
+        {
+            return;
+        }
+        if (currentLayerID == layers.Count - 1)
+        {
+            layers.Add(new SketchLayer());
+        }
+        currentLayerID += 1;
+        currentLayer = layers[currentLayerID];
+
+        grid.drawGrid(currentLayer);
+        canvas.drawStroke(currentLayer);
+    }
+    public void prevPage()
+    {
+        if (state != PadState.Idle)
+        {
+            return;
+        }
+        if (currentLayerID != 0)
+        {
+            currentLayerID -= 1;
+            currentLayer = layers[currentLayerID];
+            grid.drawGrid(currentLayer);
+            canvas.drawStroke(currentLayer);
+        }
+
     }
 }
