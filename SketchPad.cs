@@ -30,6 +30,7 @@ public class SketchPad
             currentLayer.beginStroke(vec);
             state = PadState.Draw;
             Input.SetDefaultCursorShape(Input.CursorShape.Cross);
+            canvas.drawStroke(currentLayer);
         }
         else
         {
