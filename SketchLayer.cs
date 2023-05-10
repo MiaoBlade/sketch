@@ -9,15 +9,15 @@ public enum GridType
 public struct StrokeElement
 {
     public int ID = 0;
-    public StrokeElement(Vector2 p, float pressure, float d)
+    public StrokeElement(Vector2 p, float s, float d)
     {
         pos = p;
-        size = new Vector2(pressure, pressure);
+        size = s;
         dir = d;
     }
     public Vector2 pos = Vector2.Zero;
     public float dir = 0;
-    public Vector2 size = Vector2.One;
+    public float size = 1;
 }
 public class SketchLayer
 {
@@ -70,7 +70,7 @@ public class SketchLayer
                 //interpoation
                 var lerpStep = distThreshold / dist;
                 var lerpAccumulate = lerpStep;
-                var lastPressure = lastElem.size.X;
+                var lastPressure = lastElem.size;
                 while (lerpAccumulate < 1)
                 {
                     var i_pressure = lastPressure + (size - lastPressure) * lerpAccumulate;

@@ -114,18 +114,20 @@ public class StrokeStore
             capacity *= 2;
             Array.Resize<float>(ref buffer, capacity * bufferStride);
         }
-        lastStrokeElement=elem;
+        lastStrokeElement = elem;
 
-        var trans = Transform2D.Identity.Translated(elem.pos).RotatedLocal(elem.dir).ScaledLocal(elem.size);
+        float cos_s = MathF.Cos(elem.dir) * elem.size;
+        float sin_s = MathF.Sin(elem.dir) * elem.size;
+
         int pos = elemCount * bufferStride;
-        buffer[pos] = trans.X.X;
-        buffer[pos + 1] = trans.Y.X;
+        buffer[pos] = cos_s;
+        buffer[pos + 1] = -sin_s;
         buffer[pos + 2] = 0;
-        buffer[pos + 3] = trans.Origin.X;
-        buffer[pos + 4] = trans.X.Y;
-        buffer[pos + 5] = trans.Y.Y;
+        buffer[pos + 3] = elem.pos.X;
+        buffer[pos + 4] = sin_s;
+        buffer[pos + 5] = cos_s;
         buffer[pos + 6] = 0;
-        buffer[pos + 7] = trans.Origin.Y;
+        buffer[pos + 7] = elem.pos.Y;
 
         elem.ID = elemCount;
 
