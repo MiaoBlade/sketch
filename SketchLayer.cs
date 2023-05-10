@@ -4,10 +4,11 @@ using System.Collections.Generic;
 
 public enum GridType
 {
-    Square, None,Refresh,Hexgon
+    Square, None, Refresh, Hexgon
 }
 public struct StrokeElement
 {
+    public int ID = 0;
     public StrokeElement(Vector2 p, float pressure, float d)
     {
         pos = p;
@@ -30,27 +31,30 @@ public class SketchLayer
     Vector2 dragStart;
     Vector2 dragBase;//layer pos when drag start
 
-    public List<StrokeElement> elems = new List<StrokeElement>();
     public Vector2 pos = Vector2.Zero;//layer origin in screen coord
 
     public GridType gtype = GridType.None;
     public float gdim = 50f;
+
+    public StrokeStore store = new StrokeStore();
     public SketchLayer()
     {
     }
     public void beginStroke(Vector2 vec)
     {
-        elems.Add(new StrokeElement(vec - pos, defaultPressure, rnd.Randf() * tau_f));
+        StrokeElement se = new StrokeElement(vec - pos, defaultPressure, rnd.Randf() * tau_f);
+        store.addStroke(se);
     }
     public void endStroke()
     {
     }
     public void appendStroke(Vector2 vec, float pressure)
     {
+        StrokeElement se;
         var layerCoord = vec - pos;
-        if (elems.Count != 0)
+        if (store.elemCount != 0)
         {
-            var lastElem = elems[elems.Count - 1];
+            var lastElem = store.lastStrokeElement;
             var dist = layerCoord.DistanceTo(lastElem.pos);
             if (dist < distIgnoreThreshold)
             {
@@ -59,7 +63,8 @@ public class SketchLayer
             if (dist < distThreshold)
             {
                 //too close,just add
-                elems.Add(new StrokeElement(layerCoord, pressure, rnd.Randf() * tau_f));
+                se = new StrokeElement(layerCoord, pressure, rnd.Randf() * tau_f);
+                store.addStroke(se);
             }
             else
             {
@@ -71,7 +76,7 @@ public class SketchLayer
                 {
                     var i_pressure = lastPressure + (pressure - lastPressure) * lerpAccumulate;
                     var newElem = new StrokeElement(lastElem.pos.Lerp(layerCoord, lerpAccumulate), i_pressure, rnd.Randf() * tau_f);
-                    elems.Add(newElem);
+                    store.addStroke(newElem);
                     lerpAccumulate += lerpStep;
                 }
 
@@ -98,6 +103,6 @@ public class SketchLayer
 
     public void clear()
     {
-        elems.Clear();
+        store.clear();
     }
 }

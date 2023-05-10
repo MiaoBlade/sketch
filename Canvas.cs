@@ -24,18 +24,13 @@ public partial class Canvas : Node2D
     {
         if (layer != null)
         {
-            if (mmesh.InstanceCount < layer.elems.Count)
+            if (mmesh.InstanceCount < layer.store.capacity)
             {
-                mmesh.InstanceCount = layer.elems.Count;
+                mmesh.InstanceCount = layer.store.capacity;
             }
-            mmesh.VisibleInstanceCount = layer.elems.Count;
-            var i = 0;
-            var position = Transform2D.Identity.ScaledLocal(new Vector2(10, 10));
-            foreach (var elem in layer.elems)
-            {
-                mmesh.SetInstanceTransform2D(i, position.Translated(elem.pos).RotatedLocal(elem.dir).ScaledLocal(elem.size));
-                i++;
-            }
+            mmesh.VisibleInstanceCount = layer.store.elemCount;
+
+            mmesh.Buffer = layer.store.buffer;
             DrawMultimesh(mmesh, tex);
         }
     }

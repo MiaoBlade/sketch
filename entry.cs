@@ -22,7 +22,7 @@ public partial class entry : Node2D
     // Called every frame. 'delta' is the elapsed time since the previous frame.
     public override void _Process(double delta)
     {
-        GetWindow().Title = pad.currentLayer.elems.Count.ToString() + " " ;
+        GetWindow().Title = pad.currentLayer.store.elemCount.ToString() + " " ;
     }
     public override void _Draw()
     {
