@@ -115,8 +115,8 @@ public class StrokeStore
             Array.Resize<float>(ref buffer, capacity * bufferStride);
         }
         lastStrokeElement=elem;
-        
-        var trans = Transform2D.Identity.ScaledLocal(new Vector2(10, 10)).Translated(elem.pos).RotatedLocal(elem.dir).ScaledLocal(elem.size);
+
+        var trans = Transform2D.Identity.Translated(elem.pos).RotatedLocal(elem.dir).ScaledLocal(elem.size);
         int pos = elemCount * bufferStride;
         buffer[pos] = trans.X.X;
         buffer[pos + 1] = trans.Y.X;

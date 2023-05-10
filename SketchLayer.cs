@@ -22,7 +22,6 @@ public struct StrokeElement
 public class SketchLayer
 {
     static float tau_f = (float)Math.Tau;
-    float defaultPressure = 0.1f;
     float distThreshold = 5.0f;
     float distIgnoreThreshold = 1f;
     RandomNumberGenerator rnd = new RandomNumberGenerator();
@@ -40,15 +39,15 @@ public class SketchLayer
     public SketchLayer()
     {
     }
-    public void beginStroke(Vector2 vec)
+    public void beginStroke(Vector2 vec, float size)
     {
-        StrokeElement se = new StrokeElement(vec - pos, defaultPressure, rnd.Randf() * tau_f);
+        StrokeElement se = new StrokeElement(vec - pos, size, rnd.Randf() * tau_f);
         store.addStroke(se);
     }
     public void endStroke()
     {
     }
-    public void appendStroke(Vector2 vec, float pressure)
+    public void appendStroke(Vector2 vec, float size)
     {
         StrokeElement se;
         var layerCoord = vec - pos;
@@ -63,7 +62,7 @@ public class SketchLayer
             if (dist < distThreshold)
             {
                 //too close,just add
-                se = new StrokeElement(layerCoord, pressure, rnd.Randf() * tau_f);
+                se = new StrokeElement(layerCoord, size, rnd.Randf() * tau_f);
                 store.addStroke(se);
             }
             else
@@ -74,7 +73,7 @@ public class SketchLayer
                 var lastPressure = lastElem.size.X;
                 while (lerpAccumulate < 1)
                 {
-                    var i_pressure = lastPressure + (pressure - lastPressure) * lerpAccumulate;
+                    var i_pressure = lastPressure + (size - lastPressure) * lerpAccumulate;
                     var newElem = new StrokeElement(lastElem.pos.Lerp(layerCoord, lerpAccumulate), i_pressure, rnd.Randf() * tau_f);
                     store.addStroke(newElem);
                     lerpAccumulate += lerpStep;

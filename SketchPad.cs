@@ -17,6 +17,9 @@ public class SketchPad
     public Grid grid;
     public UI ui;
     PadState state = PadState.Idle;
+
+    float baseStrokeSize = 10;
+    float defaultPressure = 0.5f;
     public SketchPad()
     {
         layers.Add(new SketchLayer());
@@ -27,7 +30,7 @@ public class SketchPad
     {
         if (state == PadState.Idle)
         {
-            currentLayer.beginStroke(vec);
+            currentLayer.beginStroke(vec, mapPressureToSize(defaultPressure));
             state = PadState.Draw;
             Input.SetDefaultCursorShape(Input.CursorShape.Cross);
             canvas.drawStroke(currentLayer);
@@ -54,7 +57,7 @@ public class SketchPad
     {
         if (state == PadState.Draw)
         {
-            currentLayer.appendStroke(vec, pressure);
+            currentLayer.appendStroke(vec, mapPressureToSize(pressure));
             canvas.drawStroke(currentLayer);
         }
         else
@@ -166,5 +169,9 @@ public class SketchPad
         grid.drawGrid(currentLayer);
         canvas.drawStroke(currentLayer);
         ui.updateLayout(vp_rect);
+    }
+    float mapPressureToSize(float p)
+    {
+        return p * baseStrokeSize;
     }
 }
