@@ -1,8 +1,47 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+
+class CollideObject
+{
+    public Vector2 start;
+    public Vector2 end;
+
+    public float radius;
+    public float cx;
+    public float cy;
+    public float rs;
+    public float re;
+    public float rmax;
+
+    public Vector2 dir;
+    public float mag;
+
+
+    public List<int> results = new List<int>();
+
+    public CollideObject(StrokeElement s, StrokeElement e)
+    {
+        start = s.pos;
+        end = e.pos;
+        cx = (s.pos.X + e.pos.X) / 2;
+        cy = (s.pos.Y + e.pos.Y) / 2;
+        rs = s.size;
+        re = e.size;
+
+        radius = ((s.pos - e.pos).Length() + s.size + e.size) / 2;
+
+        dir = e.pos - s.pos;
+        mag = dir.Length();
+        dir = dir / mag;
+
+        rmax = Math.Max(rs, re);
+    }
+}
+
 class CellStore
 {
+    float gridDim = 100;
     public int elemCount = 0;
     public int ID = 0;
     public CellStore next = null;
@@ -12,6 +51,81 @@ class CellStore
     {
         elems.Add(elem);
         elemCount++;
+    }
+    public void eraseCollide(CollideObject co)
+    {
+        float lbound = ID * gridDim;
+        float hbound = lbound + gridDim;
+
+        if (co.cx + co.radius < lbound)
+        {
+            return;
+        }
+        if (co.cx - co.radius > hbound)
+        {
+            return;
+        }
+        if (co.start.X + co.rs < lbound && co.end.X + co.re < lbound)
+        {
+            return;
+        }
+        if (co.start.X - co.rs > hbound && co.end.X - co.re > hbound)
+        {
+            return;
+        }
+        for (int i = 0; i < elems.Count; i++)
+        {
+            StrokeElement se = elems[i];
+            if (se.ID == -1)
+            {
+                continue;
+            }
+
+            if (co.cx + co.radius < se.pos.X - se.size || co.cx - co.radius > se.pos.X + se.size)
+            {
+                continue;
+            }
+            if (co.cy + co.radius < se.pos.Y - se.size || co.cy - co.radius > se.pos.Y + se.size)
+            {
+                continue;
+            }
+
+            Vector2 t = se.pos - co.start;
+
+            float prj = t.Dot(co.dir);
+
+            if (prj < -co.rs - se.size || prj > co.mag + co.re + se.size)
+            {
+                continue;
+            }
+            if (prj < -se.size)
+            {
+                if (t.Length() < se.size + co.rs)
+                {
+                    co.results.Add(se.ID);
+
+                }
+                continue;
+            }
+            if (prj > co.mag + se.size)
+            {
+                if (t.Length() < se.size + co.re)
+                {
+                    co.results.Add(se.ID);
+
+                }
+                continue;
+            }
+            float d = MathF.Sqrt(t.LengthSquared() - prj * prj);
+
+            if (d < se.size + co.rs + (co.re - co.rs) * prj / co.mag)
+            {
+                co.results.Add(se.ID);
+                se.ID = -1;
+            }
+
+        }
+
     }
 }
 class RowStore
@@ -26,6 +140,35 @@ class RowStore
     public void clear()
     {
 
+    }
+    public void eraseCollide(CollideObject co)
+    {
+        float lbound = ID * gridDim;
+        float hbound = lbound + gridDim;
+
+        if (co.cy + co.radius < lbound)
+        {
+            return;
+        }
+        if (co.cy - co.radius > hbound)
+        {
+            return;
+        }
+        if (co.start.Y + co.rs < lbound && co.end.Y + co.re < lbound)
+        {
+            return;
+        }
+        if (co.start.Y - co.rs > hbound && co.end.Y - co.re > hbound)
+        {
+            return;
+        }
+        CellStore cs = entry.next;
+        while (cs != null)
+        {
+            cs.eraseCollide(co);
+            cs = cs.next;
+
+        }
     }
     public void addStroke(StrokeElement elem)
     {
@@ -151,9 +294,35 @@ public class StrokeStore
         elemCount = 0;
     }
 
-    public void eraseCollide()
+    public void eraseCollide(StrokeElement start, StrokeElement end)
     {
+        CollideObject co = new CollideObject(start, end);
 
+        RowStore rs = entry.next;
+        while (rs != null)
+        {
+            rs.eraseCollide(co);
+            rs = rs.next;
+
+        }
+
+        foreach (var cid in co.results)
+        {
+            hideElement(cid);
+
+        }
+    }
+    void hideElement(int id)
+    {
+        int pos = id * bufferStride;
+        buffer[pos] = 0;
+        buffer[pos + 1] = 0;
+        // buffer[pos + 2] = 0;
+        // buffer[pos + 3] = elem.pos.X;
+        // buffer[pos + 4] = sin_s;
+        // buffer[pos + 5] = cos_s;
+        // buffer[pos + 6] = 0;
+        // buffer[pos + 7] = elem.pos.Y;
     }
     RowStore findOrInsertRowStore(Vector2 pos)
     {

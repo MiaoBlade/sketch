@@ -7,6 +7,11 @@ enum PadState
     Draw,
     Idle
 }
+enum DrawMode
+{
+    Pen,
+    Erase
+}
 public class SketchPad
 {
     public List<SketchLayer> layers = new List<SketchLayer>();
@@ -17,6 +22,7 @@ public class SketchPad
     public Grid grid;
     public UI ui;
     PadState state = PadState.Idle;
+    DrawMode drawMode = DrawMode.Pen;
 
     float baseStrokeSize = 10;
     float defaultPressure = 0.5f;
@@ -30,9 +36,17 @@ public class SketchPad
     {
         if (state == PadState.Idle)
         {
-            currentLayer.beginStroke(vec, mapPressureToSize(defaultPressure));
             state = PadState.Draw;
-            Input.SetDefaultCursorShape(Input.CursorShape.Cross);
+            if (drawMode == DrawMode.Pen)
+            {
+                currentLayer.beginStroke(vec, mapPressureToSize(defaultPressure));
+                Input.SetDefaultCursorShape(Input.CursorShape.Cross);
+            }
+            else
+            {
+                currentLayer.beginErase(vec, mapPressureToSize(defaultPressure));
+                Input.SetDefaultCursorShape(Input.CursorShape.CanDrop);
+            }
             canvas.drawStroke(currentLayer);
         }
         else
@@ -44,8 +58,15 @@ public class SketchPad
     {
         if (state == PadState.Draw)
         {
-            currentLayer.endStroke();
             state = PadState.Idle;
+            if (drawMode == DrawMode.Pen)
+            {
+                currentLayer.endStroke();
+            }
+            else
+            {
+                currentLayer.endErase();
+            }
             Input.SetDefaultCursorShape(Input.CursorShape.Arrow);
         }
         else
@@ -57,7 +78,14 @@ public class SketchPad
     {
         if (state == PadState.Draw)
         {
-            currentLayer.appendStroke(vec, mapPressureToSize(pressure));
+            if (drawMode == DrawMode.Pen)
+            {
+                currentLayer.appendStroke(vec, mapPressureToSize(pressure));
+            }
+            else
+            {
+                currentLayer.appendErase(vec, mapPressureToSize(pressure));
+            }
             canvas.drawStroke(currentLayer);
         }
         else
@@ -163,6 +191,17 @@ public class SketchPad
             ui.updateStatus(this);
         }
 
+    }
+    public void toggleEraseMode()
+    {
+        if (drawMode == DrawMode.Pen)
+        {
+            drawMode = DrawMode.Erase;
+        }
+        else
+        {
+            drawMode = DrawMode.Pen;
+        }
     }
     public void viewportChange(Rect2 vp_rect)
     {

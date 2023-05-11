@@ -97,6 +97,10 @@ public partial class entry : Node2D
         {
             pad.prevPage();
         }
+        else if (@event.IsActionPressed("sketchpad_erase"))
+        {
+            pad.toggleEraseMode();
+        }
         else if (@event is InputEventMouseMotion eventMouseMotion)
         {
             if (eventMouseMotion.ButtonMask == MouseButtonMask.Left)
@@ -110,7 +114,6 @@ public partial class entry : Node2D
                 pad.setGrid(GridType.Refresh);
                 GetViewport().SetInputAsHandled();
             }
-
         }
     }
     void viewportChange()

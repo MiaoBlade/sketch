@@ -36,8 +36,23 @@ public class SketchLayer
     public float gdim = 50f;
 
     public StrokeStore store = new StrokeStore();
+
+    StrokeElement lastErase;
     public SketchLayer()
     {
+    }
+    public void beginErase(Vector2 vec, float size)
+    {
+        lastErase = new StrokeElement(vec - pos, size, 0);
+    }
+    public void endErase()
+    {
+    }
+    public void appendErase(Vector2 vec, float size)
+    {
+        StrokeElement newErase = new StrokeElement(vec - pos, size, 0);
+        store.eraseCollide(lastErase, newErase);
+        lastErase = newErase;
     }
     public void beginStroke(Vector2 vec, float size)
     {
