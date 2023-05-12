@@ -103,7 +103,7 @@ class CellStore
             {
                 continue;
             }
-            if (prj < -se.size)
+            if (prj < 0)
             {
                 if (t.Length() < se.size + co.rs)
                 {
@@ -112,7 +112,7 @@ class CellStore
                 }
                 continue;
             }
-            if (prj > co.mag + se.size)
+            if (prj > co.mag)
             {
                 if (t.Length() < se.size + co.re)
                 {
