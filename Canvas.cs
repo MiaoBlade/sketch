@@ -24,6 +24,7 @@ public partial class Canvas : Node2D
     {
         if (layer != null)
         {
+            Position=layer.pos;
             if (mmesh.InstanceCount < layer.store.capacity)
             {
                 mmesh.InstanceCount = layer.store.capacity;
