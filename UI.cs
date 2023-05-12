@@ -7,18 +7,14 @@ public partial class UI : Node2D
     [Export]
     PanelContainer bg;
     [Export]
+    PanelContainer debug;
+    [Export]
     Label layerIndicator;
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
     {
-        // bg = GetNode<PanelContainer>("statusbar");
-        // layerIndicator = GetNode<Label>("layerIndicator");
         updateLayout(GetViewportRect());
-    }
-
-    // Called every frame. 'delta' is the elapsed time since the previous frame.
-    public override void _Process(double delta)
-    {
+        debug.Visible = false;
     }
     public void updateLayout(Rect2 vp_rect)
     {
@@ -29,5 +25,9 @@ public partial class UI : Node2D
     {
         layerIndicator.Text = $"{pad.currentLayerID + 1}/{pad.layers.Count}";
 
+    }
+    public void toggleDebugPanel()
+    {
+        debug.Visible = !debug.Visible;
     }
 }

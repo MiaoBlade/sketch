@@ -33,9 +33,10 @@ libraries = {
 "": SubResource("AnimationLibrary_q6hxg")
 }
 
-[node name="ui" type="Node2D" parent="." node_paths=PackedStringArray("bg", "layerIndicator")]
+[node name="ui" type="Node2D" parent="." node_paths=PackedStringArray("bg", "debug", "layerIndicator")]
 script = ExtResource("4_041qh")
 bg = NodePath("statusbar")
+debug = NodePath("debugPanel")
 layerIndicator = NodePath("statusbar/VBoxContainer/CenterContainer/layerIndicator")
 
 [node name="statusbar" type="PanelContainer" parent="ui"]
@@ -65,3 +66,15 @@ layout_mode = 2
 theme = ExtResource("4_igdwo")
 text = "1/1
 "
+
+[node name="debugPanel" type="PanelContainer" parent="ui"]
+offset_right = 257.0
+offset_bottom = 297.0
+
+[node name="Button" type="Button" parent="ui/debugPanel"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+text = "10000 stroke"
+
+[connection signal="pressed" from="ui/debugPanel/Button" to="." method="debug_generate_stroke"]

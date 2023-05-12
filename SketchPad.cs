@@ -187,6 +187,10 @@ public class SketchPad
         }
 
     }
+    public void toggleDebugPanel()
+    {
+        ui.toggleDebugPanel();
+    }
     public void toggleEraseMode()
     {
         if (drawMode == DrawMode.Pen)

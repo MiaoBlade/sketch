@@ -16,13 +16,13 @@ public partial class entry : Node2D
         pad.grid = GetNode<Grid>("grid");
         pad.ui = ui;
         GetViewport().SizeChanged += viewportChange;
-        GetWindow().MinSize=new Vector2I(640,480);
+        GetWindow().MinSize = new Vector2I(640, 480);
     }
 
     // Called every frame. 'delta' is the elapsed time since the previous frame.
     public override void _Process(double delta)
     {
-        GetWindow().Title = pad.currentLayer.store.elemCount.ToString() + " " ;
+        GetWindow().Title = pad.currentLayer.store.elemCount.ToString() + " ";
         pad.Process(delta);
     }
     public override void _Draw()
@@ -102,6 +102,10 @@ public partial class entry : Node2D
         {
             pad.toggleEraseMode();
         }
+        else if (@event.IsActionPressed("sketchpad_debug"))
+        {
+            pad.toggleDebugPanel();
+        }
         else if (@event is InputEventMouseMotion eventMouseMotion)
         {
             if (eventMouseMotion.ButtonMask == MouseButtonMask.Left)
@@ -118,5 +122,24 @@ public partial class entry : Node2D
     void viewportChange()
     {
         pad.viewportChange(GetViewportRect());
+    }
+
+    void debug_generate_stroke()
+    {
+
+        pad.beginStroke(Vector2.Zero);
+        RandomNumberGenerator rd = new RandomNumberGenerator();
+        Vector2 ssize = GetViewportRect().Size;
+
+        for (int i = 0; i < 10000; i++)
+        {
+            pad.appendStroke(new Vector2(ssize.X * rd.Randf(), ssize.Y * rd.Randf()), rd.Randf());
+            if (pad.currentLayer.store.elemCount > 10000)
+            {
+                break;
+            }
+        }
+        pad.endDrag(new Vector2(ssize.X * rd.Randf(), ssize.Y * rd.Randf()));
+        pad.canvas.drawStroke(pad.currentLayer);
     }
 }
