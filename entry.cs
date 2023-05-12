@@ -83,7 +83,6 @@ public partial class entry : Node2D
     {
         if (@event.IsActionPressed("sketchpad_clear"))
         {
-            GD.Print("sketchpad_clear occurred!");
             pad.clear();
         }
         else if (@event.IsActionPressed("sketchpad_grid_hexgon"))

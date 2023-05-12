@@ -26,6 +26,7 @@ public class SketchPad
 
     float baseStrokeSize = 10;
     float defaultPressure = 0.5f;
+    float eraseSizeMultiplier = 0.5f;
     public SketchPad()
     {
         layers.Add(new SketchLayer());
@@ -43,7 +44,7 @@ public class SketchPad
             }
             else
             {
-                currentLayer.beginErase(vec, mapPressureToSize(defaultPressure));
+                currentLayer.beginErase(vec, mapPressureToSize(defaultPressure * eraseSizeMultiplier));
             }
             canvas.drawStroke(currentLayer);
         }
@@ -81,7 +82,7 @@ public class SketchPad
             }
             else
             {
-                currentLayer.appendErase(vec, mapPressureToSize(pressure));
+                currentLayer.appendErase(vec, mapPressureToSize(eraseSizeMultiplier * pressure));
             }
             canvas.drawStroke(currentLayer);
         }
@@ -210,7 +211,7 @@ public class SketchPad
     }
     float mapPressureToSize(float p)
     {
-        return p * baseStrokeSize;
+        return Mathf.Sqrt(p) * baseStrokeSize;
     }
     public void Process(double delta)
     {
