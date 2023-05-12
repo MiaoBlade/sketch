@@ -52,6 +52,11 @@ class CellStore
         elems.Add(elem);
         elemCount++;
     }
+    public void clear()
+    {
+        elems.Clear();
+        elemCount = 0;
+    }
     public void eraseCollide(CollideObject co)
     {
         float lbound = ID * gridDim;
@@ -139,7 +144,17 @@ class RowStore
     public CellStore entry = new CellStore();
     public void clear()
     {
+        CellStore start = entry.next;
+        while (start != null)
+        {
+            start.clear();
+            start.prev.next = null;
+            start.prev = null;
+            start = start.next;
 
+        }
+        CellCount = 0;
+        elemCount = 0;
     }
     public void eraseCollide(CollideObject co)
     {

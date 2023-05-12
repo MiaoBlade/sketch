@@ -139,7 +139,6 @@ public partial class entry : Node2D
                 break;
             }
         }
-        pad.endDrag(new Vector2(ssize.X * rd.Randf(), ssize.Y * rd.Randf()));
-        pad.canvas.drawStroke(pad.currentLayer);
+        pad.endStroke();
     }
 }
