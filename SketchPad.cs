@@ -40,12 +40,10 @@ public class SketchPad
             if (drawMode == DrawMode.Pen)
             {
                 currentLayer.beginStroke(vec, mapPressureToSize(defaultPressure));
-                Input.SetDefaultCursorShape(Input.CursorShape.Cross);
             }
             else
             {
                 currentLayer.beginErase(vec, mapPressureToSize(defaultPressure));
-                Input.SetDefaultCursorShape(Input.CursorShape.CanDrop);
             }
             canvas.drawStroke(currentLayer);
         }
@@ -67,7 +65,6 @@ public class SketchPad
             {
                 currentLayer.endErase();
             }
-            Input.SetDefaultCursorShape(Input.CursorShape.Arrow);
         }
         else
         {
@@ -99,7 +96,6 @@ public class SketchPad
         {
             currentLayer.beginDrag(vec);
             state = PadState.Drag;
-            Input.SetDefaultCursorShape(Input.CursorShape.PointingHand);
         }
         else
         {
@@ -113,7 +109,6 @@ public class SketchPad
             currentLayer.endDrag(vec);
             canvas.Position = currentLayer.pos;
             state = PadState.Idle;
-            Input.SetDefaultCursorShape(Input.CursorShape.Arrow);
         }
         else
         {
@@ -212,5 +207,21 @@ public class SketchPad
     float mapPressureToSize(float p)
     {
         return p * baseStrokeSize;
+    }
+    public void Process(double delta)
+    {
+        if (state == PadState.Drag)
+        {
+            Input.SetDefaultCursorShape(Input.CursorShape.PointingHand);
+        }
+        else if (drawMode == DrawMode.Pen)
+        {
+            Input.SetDefaultCursorShape(Input.CursorShape.Cross);
+        }
+        else
+        {
+            Input.SetDefaultCursorShape(Input.CursorShape.Arrow);
+        }
+
     }
 }

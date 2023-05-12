@@ -23,6 +23,7 @@ public partial class entry : Node2D
     public override void _Process(double delta)
     {
         GetWindow().Title = pad.currentLayer.store.elemCount.ToString() + " " ;
+        pad.Process(delta);
     }
     public override void _Draw()
     {
@@ -106,13 +107,11 @@ public partial class entry : Node2D
             if (eventMouseMotion.ButtonMask == MouseButtonMask.Left)
             {
                 pad.appendStroke(eventMouseMotion.Position, eventMouseMotion.Pressure);
-                GetViewport().SetInputAsHandled();
             }
             else if (eventMouseMotion.ButtonMask == MouseButtonMask.Middle)
             {
                 pad.updateDrag(eventMouseMotion.Position);
                 pad.setGrid(GridType.Refresh);
-                GetViewport().SetInputAsHandled();
             }
         }
     }
