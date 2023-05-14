@@ -1,6 +1,10 @@
 using Godot;
 using System.Collections.Generic;
 
+public enum GridType
+{
+    Square, None, Refresh, Hexgon
+}
 enum PadState
 {
     Drag,

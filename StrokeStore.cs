@@ -38,6 +38,19 @@ class CollideObject
         rmax = Math.Max(rs, re);
     }
 }
+public struct StrokeElement
+{
+    public int ID = 0;
+    public StrokeElement(Vector2 p, float s, float d)
+    {
+        pos = p;
+        size = s;
+        dir = d;
+    }
+    public Vector2 pos = Vector2.Zero;
+    public float dir = 0;
+    public float size = 1;
+}
 
 class CellStore
 {
