@@ -1,6 +1,6 @@
 shader_type canvas_item;
+render_mode unshaded;
 
 void fragment() {
-	// Place fragment code here.
-	COLOR=vec4(0,0,0,1);
+	COLOR=texture(TEXTURE, UV);
 }

@@ -1,10 +1,14 @@
-[gd_scene load_steps=9 format=3 uid="uid://dc1d2edf7xs4t"]
+[gd_scene load_steps=11 format=3 uid="uid://dc1d2edf7xs4t"]
 
 [ext_resource type="Script" path="res://entry.cs" id="1_ln017"]
 [ext_resource type="Script" path="res://Canvas.cs" id="2_jtn6x"]
 [ext_resource type="Script" path="res://Grid.cs" id="3_4ujbw"]
+[ext_resource type="Shader" path="res://stroke.gdshader" id="3_r37tk"]
 [ext_resource type="Script" path="res://UI.cs" id="4_041qh"]
 [ext_resource type="Theme" uid="uid://bt2t12k0tyewq" path="res://default_theme.tres" id="4_igdwo"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_f85w7"]
+shader = ExtResource("3_r37tk")
 
 [sub_resource type="Animation" id="Animation_t8kyt"]
 resource_name = "statusbar_in"
@@ -26,6 +30,8 @@ ui = NodePath("ui")
 script = ExtResource("3_4ujbw")
 
 [node name="canvas" type="Node2D" parent="."]
+texture_filter = 4
+material = SubResource("ShaderMaterial_f85w7")
 script = ExtResource("2_jtn6x")
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
