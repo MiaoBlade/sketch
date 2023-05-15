@@ -262,11 +262,14 @@ class RowStore
 }
 public class StrokeStore
 {
+    static float tau_f = (float)Math.Tau;
+    RandomNumberGenerator rnd = new RandomNumberGenerator();
     float gridDim = 100;
     int bufferStride = 8;
     public int elemCount = 0;
     public int RowCount = 0;
-
+    float distThreshold = 4.0f;
+    float distIgnoreThreshold = 1f;
     public int capacity = 8 * 1024;
     public float[] buffer;
     public StrokeElement lastStrokeElement;
@@ -277,7 +280,42 @@ public class StrokeStore
         buffer = new float[capacity * bufferStride];
     }
 
-    public void addStroke(StrokeElement elem)
+    public void addStroke(StrokeElement elem, bool isFirst = false)
+    {
+        if (isFirst)
+        {
+            insertStroke(elem, Transform2D.Identity.ScaledLocal(Vector2.One * elem.size).RotatedLocal(elem.dir));
+        }
+        else
+        {
+            var dist = elem.pos.DistanceTo(lastStrokeElement.pos);
+            if (dist < distIgnoreThreshold)
+            {
+                //too close,skip
+                return;
+            }
+            if (dist < distThreshold)
+            {
+                //too close,just add
+                insertStroke(elem, Transform2D.Identity.ScaledLocal(Vector2.One * elem.size).RotatedLocal(elem.dir));
+            }
+            else
+            {
+                //interpoation
+                var lerpStep = distThreshold / dist;
+                var lerpAccumulate = lerpStep;
+                var lerpStart=lastStrokeElement;
+                while (lerpAccumulate < 1)
+                {
+                    var i_pressure = lerpStart.size + (elem.size - lerpStart.size) * lerpAccumulate;
+                    var newElem = new StrokeElement(lerpStart.pos.Lerp(elem.pos, lerpAccumulate), i_pressure, rnd.Randf() * tau_f);
+                    insertStroke(newElem, Transform2D.Identity.ScaledLocal(Vector2.One * newElem.size).RotatedLocal(newElem.dir));
+                    lerpAccumulate += lerpStep;
+                }
+            }
+        }
+    }
+    void insertStroke(StrokeElement elem, Transform2D xform)
     {
         if ((elemCount + 1) * bufferStride >= buffer.Length)
         {
@@ -285,26 +323,22 @@ public class StrokeStore
             capacity *= 2;
             Array.Resize<float>(ref buffer, capacity * bufferStride);
         }
-        lastStrokeElement = elem;
-
-        float cos_s = MathF.Cos(elem.dir) * elem.size;
-        float sin_s = MathF.Sin(elem.dir) * elem.size;
 
         int pos = elemCount * bufferStride;
-        buffer[pos] = cos_s;
-        buffer[pos + 1] = -sin_s;
+        buffer[pos] = xform.X[0];
+        buffer[pos + 1] = xform.X[1];
         buffer[pos + 2] = 0;
         buffer[pos + 3] = elem.pos.X;
-        buffer[pos + 4] = sin_s;
-        buffer[pos + 5] = cos_s;
+        buffer[pos + 4] = xform.Y[0];
+        buffer[pos + 5] = xform.Y[1];
         buffer[pos + 6] = 0;
         buffer[pos + 7] = elem.pos.Y;
 
         elem.ID = elemCount;
-
         RowStore rs = findOrInsertRowStore(elem.pos);
         rs.addStroke(elem);
         elemCount++;
+        lastStrokeElement = elem;
     }
 
     public void clear()
