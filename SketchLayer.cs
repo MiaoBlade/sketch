@@ -37,7 +37,7 @@ public class SketchLayer
     }
     public void beginStroke(Vector2 vec, float size)
     {
-        StrokeElement se = new StrokeElement(vec - pos, size, rnd.Randf() * tau_f);
+        StrokeElement se = new StrokeElement(vec - pos, size, 0);
         store.addStroke(se,true);
     }
     public void endStroke()
@@ -46,7 +46,7 @@ public class SketchLayer
     public void appendStroke(Vector2 vec, float size)
     {
         var layerCoord = vec - pos;
-        StrokeElement se=new StrokeElement(layerCoord, size, rnd.Randf() * tau_f);
+        StrokeElement se=new StrokeElement(layerCoord, size, 0);
         store.addStroke(se);
     }
     public void beginDrag(Vector2 vec)

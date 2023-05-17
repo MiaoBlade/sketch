@@ -51,6 +51,15 @@ public struct StrokeElement
     public float dir = 0;
     public float size = 1;
 }
+public struct StrokeState
+{
+    public int strokeCount = 0;
+    public bool lastIsFirst = false;
+    public StrokeState()
+    {
+
+    }
+}
 
 class CellStore
 {
@@ -265,15 +274,16 @@ public class StrokeStore
     static float tau_f = (float)Math.Tau;
     RandomNumberGenerator rnd = new RandomNumberGenerator();
     float gridDim = 100;
-    int bufferStride = 8;
+    int bufferStride = 12;//8 for xform, 4 for custom
     public int elemCount = 0;
     public int RowCount = 0;
-    float distThreshold = 4.0f;
-    float distIgnoreThreshold = 1f;
+    float distThreshold = 5.0f;
+    float distIgnoreThreshold = 5f;
     public int capacity = 8 * 1024;
     public float[] buffer;
     public StrokeElement lastStrokeElement;
 
+    StrokeState strokeState;
     RowStore entry = new RowStore();//linklist root,next point to smallest id
     public StrokeStore()
     {
@@ -284,7 +294,8 @@ public class StrokeStore
     {
         if (isFirst)
         {
-            insertStroke(elem, Transform2D.Identity.ScaledLocal(Vector2.One * elem.size).RotatedLocal(elem.dir));
+            insertStroke(elem, Transform2D.Identity.RotatedLocal(elem.dir));
+            strokeState.lastIsFirst = true;
         }
         else
         {
@@ -294,28 +305,84 @@ public class StrokeStore
                 //too close,skip
                 return;
             }
-            if (dist < distThreshold)
+            Vector2 dir = (elem.pos - lastStrokeElement.pos) / dist;
+            Transform2D xform;
+            var radianDir = dir.Angle();
+            elem.dir = radianDir;
+            float[] customData = new float[4];
+            float size_half = elem.size / 2;
+            //fix last stroke connection
+            float deltaAngle = radianDir - lastStrokeElement.dir;
+            if (strokeState.lastIsFirst)
             {
-                //too close,just add
-                insertStroke(elem, Transform2D.Identity.ScaledLocal(Vector2.One * elem.size).RotatedLocal(elem.dir));
+                xform = Transform2D.Identity.RotatedLocal(-deltaAngle);
+                xform.Origin = lastStrokeElement.pos;
+                writeXformToBuffer(lastStrokeElement.ID, xform);
+                strokeState.lastIsFirst = false;
             }
             else
             {
+                var custom = getCustom(lastStrokeElement.ID);
+                var vert = new Vector2(lastStrokeElement.size / 2, -lastStrokeElement.size / 2);
+                var vert_r = vert.Rotated(deltaAngle);
+                custom[0] = packPosition(vert_r.X, vert_r.Y);
+                vert.Y = lastStrokeElement.size / 2;
+                vert_r = vert.Rotated(deltaAngle);
+                custom[2] = packPosition(vert_r.X, vert_r.Y);
+            }
+
+            if (dist < lastStrokeElement.size / 2 + size_half)
+            {
+                //too close,just add
+                elem.dir = radianDir;
+
+                customData[0] = packPosition(size_half, -size_half);
+                customData[1] = packPosition(-(dist - lastStrokeElement.size / 2), -size_half);
+                customData[2] = packPosition(size_half, size_half);
+                customData[3] = packPosition(-(dist - lastStrokeElement.size / 2), size_half);
+                insertStroke(elem, Transform2D.Identity.RotatedLocal(-radianDir), customData);
+            }
+            else
+            {
+                StrokeElement interp_base = lastStrokeElement;
+                float l_real = dist - elem.size / 2 - lastStrokeElement.size / 2;
+                float num_interp = Math.Max(1, Mathf.Floor(l_real / distThreshold));
+                float d_interp = l_real / num_interp;
+
                 //interpoation
-                var lerpStep = distThreshold / dist;
-                var lerpAccumulate = lerpStep;
-                var lerpStart=lastStrokeElement;
-                while (lerpAccumulate < 1)
+                var l_start = d_interp / 2 + interp_base.size / 2;
+                var s_start = interp_base.size + (elem.size - interp_base.size) / 2 / num_interp;
+                var s_step = (elem.size - interp_base.size) / num_interp;
+
+                float r_interp = d_interp / 2;
+
+                for (int i = 0; i < num_interp; i++)
                 {
-                    var i_pressure = lerpStart.size + (elem.size - lerpStart.size) * lerpAccumulate;
-                    var newElem = new StrokeElement(lerpStart.pos.Lerp(elem.pos, lerpAccumulate), i_pressure, rnd.Randf() * tau_f);
-                    insertStroke(newElem, Transform2D.Identity.ScaledLocal(Vector2.One * newElem.size).RotatedLocal(newElem.dir));
-                    lerpAccumulate += lerpStep;
+                    size_half = (s_start + s_step * i) / 2;
+
+                    customData[0] = packPosition(r_interp, -size_half);
+                    customData[1] = packPosition(-r_interp, -size_half);
+                    customData[2] = packPosition(r_interp, size_half);
+                    customData[3] = packPosition(-r_interp, size_half);
+                    var newElem = new StrokeElement(interp_base.pos + dir * (l_start + d_interp * i), size_half * 2, 0);
+                    insertStroke(newElem, Transform2D.Identity.RotatedLocal(-radianDir), customData);
                 }
+
+                insertStroke(elem, Transform2D.Identity.RotatedLocal(-radianDir));
+
             }
         }
     }
-    void insertStroke(StrokeElement elem, Transform2D xform)
+    float packPosition(float x, float y)
+    {
+        ushort x_short = BitConverter.HalfToUInt16Bits((Half)x);
+        ushort y_short = BitConverter.HalfToUInt16Bits((Half)y);
+
+        uint bits = ((uint)y_short << 16) + x_short;
+
+        return BitConverter.UInt32BitsToSingle(bits);
+    }
+    void insertStroke(StrokeElement elem, Transform2D xform, float[] custom = null)
     {
         if ((elemCount + 1) * bufferStride >= buffer.Length)
         {
@@ -323,22 +390,68 @@ public class StrokeStore
             capacity *= 2;
             Array.Resize<float>(ref buffer, capacity * bufferStride);
         }
-
+        xform.Origin = elem.pos;
         int pos = elemCount * bufferStride;
-        buffer[pos] = xform.X[0];
-        buffer[pos + 1] = xform.X[1];
-        buffer[pos + 2] = 0;
-        buffer[pos + 3] = elem.pos.X;
-        buffer[pos + 4] = xform.Y[0];
-        buffer[pos + 5] = xform.Y[1];
-        buffer[pos + 6] = 0;
-        buffer[pos + 7] = elem.pos.Y;
+        writeXformToBuffer(elemCount, xform);
+
+        if (custom != null)
+        {
+            writeCUstomDataToBuffer(elemCount, custom);
+        }
+        else
+        {
+            float size_half = elem.size / 2;
+            buffer[pos + 8] = packPosition(size_half, -size_half);
+            buffer[pos + 9] = packPosition(-size_half, -size_half);
+            buffer[pos + 10] = packPosition(size_half, size_half);
+            buffer[pos + 11] = packPosition(-size_half, size_half);
+        }
+
 
         elem.ID = elemCount;
         RowStore rs = findOrInsertRowStore(elem.pos);
         rs.addStroke(elem);
         elemCount++;
         lastStrokeElement = elem;
+    }
+    void overrideStroke(StrokeElement elem, Transform2D xform, float[] custom = null)
+    {
+        xform.Origin = elem.pos;
+        writeXformToBuffer(elem.ID, xform);
+
+        if (custom != null)
+        {
+            writeCUstomDataToBuffer(elem.ID, custom);
+        }
+        else
+        {
+            int pos = elem.ID * bufferStride;
+            float size_half = elem.size / 2;
+            buffer[pos + 8] = packPosition(size_half, -size_half);
+            buffer[pos + 9] = packPosition(-size_half, -size_half);
+            buffer[pos + 10] = packPosition(size_half, size_half);
+            buffer[pos + 11] = packPosition(-size_half, size_half);
+        }
+    }
+    void writeXformToBuffer(int index, Transform2D xform)
+    {
+        int pos = index * bufferStride;
+        buffer[pos] = xform.X[0];
+        buffer[pos + 1] = xform.X[1];
+        buffer[pos + 2] = 0;
+        buffer[pos + 3] = xform.Origin.X;
+        buffer[pos + 4] = xform.Y[0];
+        buffer[pos + 5] = xform.Y[1];
+        buffer[pos + 6] = 0;
+        buffer[pos + 7] = xform.Origin.Y;
+    }
+    void writeCUstomDataToBuffer(int index, float[] custom)
+    {
+        int pos = index * bufferStride;
+        buffer[pos + 8] = custom[0];
+        buffer[pos + 9] = custom[1];
+        buffer[pos + 10] = custom[2];
+        buffer[pos + 11] = custom[3];
     }
 
     public void clear()
@@ -442,5 +555,10 @@ public class StrokeStore
         rs.next = newRS;
         RowCount++;
         return newRS;
+    }
+    Span<float> getCustom(int index)
+    {
+        int pos = index * bufferStride;
+        return buffer.AsSpan<float>(pos + 8, 4);
     }
 }

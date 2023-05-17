@@ -19,6 +19,7 @@ public partial class Canvas : Node2D
         mmesh = new MultiMesh();
         mmesh.Mesh = qMesh;
         mmesh.TransformFormat = MultiMesh.TransformFormatEnum.Transform2D;
+        mmesh.UseCustomData=true;
     }
     public override void _Draw()
     {

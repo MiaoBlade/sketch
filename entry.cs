@@ -142,8 +142,19 @@ public partial class entry : Node2D
     }
     void debug_stroke_interp()
     {
-        pad.currentLayer.store.addStroke(new StrokeElement(new Vector2(100,100),10,0),true);
-        pad.currentLayer.store.addStroke(new StrokeElement(new Vector2(200,200),10,0));
+        float x = 500;
+        float y = 200;
+        float x_step = 5;
+        float y_step = 2;
+        pad.currentLayer.store.addStroke(new StrokeElement(new Vector2(x, y), 2, 0), true);
+
+        for (int i = 0; i < 10; i++)
+        {
+            x += x_step;
+            y += y_step;
+            pad.currentLayer.store.addStroke(new StrokeElement(new Vector2(x, y), 2, 0));
+            y_step *= -1;
+        }
         pad.canvas.drawStroke(pad.currentLayer);
     }
 }
