@@ -140,4 +140,10 @@ public partial class entry : Node2D
         }
         pad.endStroke();
     }
+    void debug_stroke_interp()
+    {
+        pad.currentLayer.store.addStroke(new StrokeElement(new Vector2(100,100),10,0),true);
+        pad.currentLayer.store.addStroke(new StrokeElement(new Vector2(200,200),10,0));
+        pad.canvas.drawStroke(pad.currentLayer);
+    }
 }
