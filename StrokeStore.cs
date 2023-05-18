@@ -292,6 +292,10 @@ public class StrokeStore
         buffer = new float[capacity * bufferStride];
     }
 
+    public void addPureStroke(StrokeElement elem)
+    {
+        insertStroke(elem, Transform2D.Identity);
+    }
     public void addStroke(StrokeElement elem, bool isFirst = false)
     {
         if (isFirst)

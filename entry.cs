@@ -142,18 +142,28 @@ public partial class entry : Node2D
     }
     void debug_stroke_interp()
     {
-        float x = 500;
-        float y = 200;
-        float x_step = 5;
-        float y_step = 2;
-        pad.currentLayer.store.addStroke(new StrokeElement(new Vector2(x, y), 2, 0), true);
+        // float x = 500;
+        // float y = 200;
+        // float x_step = 5;
+        // float y_step = 2;
+        // pad.currentLayer.store.addStroke(new StrokeElement(new Vector2(x, y), 2, 0), true);
 
-        for (int i = 0; i < 10; i++)
+        // for (int i = 0; i < 10; i++)
+        // {
+        //     x += x_step;
+        //     y += y_step;
+        //     pad.currentLayer.store.addStroke(new StrokeElement(new Vector2(x, y), 2, 0));
+        //     y_step *= -1;
+        // }
+        // pad.canvas.drawStroke(pad.currentLayer);
+
+        var bcurve=new CubicCurve(new Vector2(300,200),new Vector2(400,300),new Vector2(500,100),new Vector2(600,200));
+
+        for (int i = 0; i < 21; i++)
         {
-            x += x_step;
-            y += y_step;
-            pad.currentLayer.store.addStroke(new StrokeElement(new Vector2(x, y), 2, 0));
-            y_step *= -1;
+            // var p=bcurve.getPoint(((float)Math.Sqrt(i/10.0)));
+            var p=bcurve.getPoint((float)(i/20.0));
+            pad.currentLayer.store.addPureStroke(new StrokeElement(p, 5, 0));
         }
         pad.canvas.drawStroke(pad.currentLayer);
     }
