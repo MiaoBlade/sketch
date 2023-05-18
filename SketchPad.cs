@@ -28,7 +28,7 @@ public class SketchPad
     PadState state = PadState.Idle;
     DrawMode drawMode = DrawMode.Pen;
 
-    float baseStrokeSize = 10;
+    float baseStrokeSize = 6;
     float defaultPressure = 0.5f;
     float eraseSizeMultiplier = 0.5f;
     public SketchPad()

@@ -26,10 +26,10 @@ class CollideObject
         end = e.pos;
         cx = (s.pos.X + e.pos.X) / 2;
         cy = (s.pos.Y + e.pos.Y) / 2;
-        rs = s.size;
-        re = e.size;
+        rs = s.hsize;
+        re = e.hsize;
 
-        radius = ((s.pos - e.pos).Length() + s.size + e.size) / 2;
+        radius = (s.pos - e.pos).Length() / 2 + s.hsize + e.hsize;
 
         dir = e.pos - s.pos;
         mag = dir.Length();
@@ -44,12 +44,14 @@ public struct StrokeElement
     public StrokeElement(Vector2 p, float s, float d)
     {
         pos = p;
-        size = s;
+        hsize = s / 2;
         dir = d;
+
     }
     public Vector2 pos = Vector2.Zero;
     public float dir = 0;
     public float size = 1;
+    public float hsize = 0.5f;
 }
 public struct StrokeState
 {
@@ -108,11 +110,11 @@ class CellStore
                 continue;
             }
 
-            if (co.cx + co.radius < se.pos.X - se.size || co.cx - co.radius > se.pos.X + se.size)
+            if (co.cx + co.radius < se.pos.X - se.hsize || co.cx - co.radius > se.pos.X + se.hsize)
             {
                 continue;
             }
-            if (co.cy + co.radius < se.pos.Y - se.size || co.cy - co.radius > se.pos.Y + se.size)
+            if (co.cy + co.radius < se.pos.Y - se.hsize || co.cy - co.radius > se.pos.Y + se.hsize)
             {
                 continue;
             }
@@ -121,13 +123,13 @@ class CellStore
 
             float prj = t.Dot(co.dir);
 
-            if (prj < -co.rs - se.size || prj > co.mag + co.re + se.size)
+            if (prj < -co.rs - se.hsize || prj > co.mag + co.re + se.hsize)
             {
                 continue;
             }
             if (prj < 0)
             {
-                if (t.Length() < se.size + co.rs)
+                if (t.Length() < se.hsize + co.rs)
                 {
                     co.results.Add(se.ID);
 
@@ -136,7 +138,7 @@ class CellStore
             }
             if (prj > co.mag)
             {
-                if (t.Length() < se.size + co.re)
+                if (co.end.DistanceTo(se.pos) < se.hsize + co.re)
                 {
                     co.results.Add(se.ID);
 
@@ -145,7 +147,7 @@ class CellStore
             }
             float d = MathF.Sqrt(t.LengthSquared() - prj * prj);
 
-            if (d < se.size + co.rs + (co.re - co.rs) * prj / co.mag)
+            if (d < se.hsize + co.rs + (co.re - co.rs) * prj / co.mag)
             {
                 co.results.Add(se.ID);
                 se.ID = -1;
@@ -310,7 +312,7 @@ public class StrokeStore
             var radianDir = dir.Angle();
             elem.dir = radianDir;
             float[] customData = new float[4];
-            float size_half = elem.size / 2;
+            float size_half = elem.hsize;
             //fix last stroke connection
             float deltaAngle = radianDir - lastStrokeElement.dir;
             if (strokeState.lastIsFirst)
@@ -323,42 +325,42 @@ public class StrokeStore
             else
             {
                 var custom = getCustom(lastStrokeElement.ID);
-                var vert = new Vector2(lastStrokeElement.size / 2, -lastStrokeElement.size / 2);
+                var vert = new Vector2(lastStrokeElement.hsize, -lastStrokeElement.hsize);
                 var vert_r = vert.Rotated(deltaAngle);
                 custom[0] = packPosition(vert_r.X, vert_r.Y);
-                vert.Y = lastStrokeElement.size / 2;
+                vert.Y = lastStrokeElement.hsize;
                 vert_r = vert.Rotated(deltaAngle);
                 custom[2] = packPosition(vert_r.X, vert_r.Y);
             }
 
-            if (dist < lastStrokeElement.size / 2 + size_half)
+            if (dist < lastStrokeElement.hsize + size_half)
             {
                 //too close,just add
                 elem.dir = radianDir;
 
                 customData[0] = packPosition(size_half, -size_half);
-                customData[1] = packPosition(-(dist - lastStrokeElement.size / 2), -size_half);
+                customData[1] = packPosition(-(dist - lastStrokeElement.hsize), -size_half);
                 customData[2] = packPosition(size_half, size_half);
-                customData[3] = packPosition(-(dist - lastStrokeElement.size / 2), size_half);
+                customData[3] = packPosition(-(dist - lastStrokeElement.hsize), size_half);
                 insertStroke(elem, Transform2D.Identity.RotatedLocal(-radianDir), customData);
             }
             else
             {
                 StrokeElement interp_base = lastStrokeElement;
-                float l_real = dist - elem.size / 2 - lastStrokeElement.size / 2;
+                float l_real = dist - elem.hsize - lastStrokeElement.hsize;
                 float num_interp = Math.Max(1, Mathf.Floor(l_real / distThreshold));
                 float d_interp = l_real / num_interp;
 
                 //interpoation
-                var l_start = d_interp / 2 + interp_base.size / 2;
-                var s_start = interp_base.size + (elem.size - interp_base.size) / 2 / num_interp;
-                var s_step = (elem.size - interp_base.size) / num_interp;
+                var l_start = d_interp / 2 + interp_base.hsize;
+                var s_start = interp_base.hsize + (elem.hsize - interp_base.hsize) / num_interp;
+                var s_step = (elem.hsize - interp_base.hsize) / num_interp;
 
                 float r_interp = d_interp / 2;
 
                 for (int i = 0; i < num_interp; i++)
                 {
-                    size_half = (s_start + s_step * i) / 2;
+                    size_half = s_start + s_step * i;
 
                     customData[0] = packPosition(r_interp, -size_half);
                     customData[1] = packPosition(-r_interp, -size_half);
@@ -400,7 +402,7 @@ public class StrokeStore
         }
         else
         {
-            float size_half = elem.size / 2;
+            float size_half = elem.hsize;
             buffer[pos + 8] = packPosition(size_half, -size_half);
             buffer[pos + 9] = packPosition(-size_half, -size_half);
             buffer[pos + 10] = packPosition(size_half, size_half);
@@ -426,7 +428,7 @@ public class StrokeStore
         else
         {
             int pos = elem.ID * bufferStride;
-            float size_half = elem.size / 2;
+            float size_half = elem.hsize;
             buffer[pos + 8] = packPosition(size_half, -size_half);
             buffer[pos + 9] = packPosition(-size_half, -size_half);
             buffer[pos + 10] = packPosition(size_half, size_half);
