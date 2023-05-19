@@ -276,7 +276,7 @@ public class StrokeStore
     static float tau_f = (float)Math.Tau;
     RandomNumberGenerator rnd = new RandomNumberGenerator();
     float gridDim = 100;
-    int bufferStride = 12;//8 for xform, 4 for custom
+    int bufferStride = 16;//8 for xform, 4 for color, 4 for custom
     public int elemCount = 0;
     public int RowCount = 0;
     float distThreshold = 5.0f;
@@ -399,18 +399,19 @@ public class StrokeStore
         xform.Origin = elem.pos;
         int pos = elemCount * bufferStride;
         writeXformToBuffer(elemCount, xform);
+        writeColorToBuffer(elemCount, Color.Color8(255, 150, 0, 255));
 
         if (custom != null)
         {
-            writeCUstomDataToBuffer(elemCount, custom);
+            writeCustomDataToBuffer(elemCount, custom);
         }
         else
         {
             float size_half = elem.hsize;
-            buffer[pos + 8] = packPosition(size_half, -size_half);
-            buffer[pos + 9] = packPosition(-size_half, -size_half);
-            buffer[pos + 10] = packPosition(size_half, size_half);
-            buffer[pos + 11] = packPosition(-size_half, size_half);
+            buffer[pos + 12] = packPosition(size_half, -size_half);
+            buffer[pos + 13] = packPosition(-size_half, -size_half);
+            buffer[pos + 14] = packPosition(size_half, size_half);
+            buffer[pos + 15] = packPosition(-size_half, size_half);
         }
 
 
@@ -427,7 +428,7 @@ public class StrokeStore
 
         if (custom != null)
         {
-            writeCUstomDataToBuffer(elem.ID, custom);
+            writeCustomDataToBuffer(elem.ID, custom);
         }
         else
         {
@@ -438,6 +439,14 @@ public class StrokeStore
             buffer[pos + 10] = packPosition(size_half, size_half);
             buffer[pos + 11] = packPosition(-size_half, size_half);
         }
+    }
+    void writeColorToBuffer(int index, Color color)
+    {
+        int pos = index * bufferStride;
+        buffer[pos + 8] = color.R;
+        buffer[pos + 9] = color.G;
+        buffer[pos + 10] = color.B;
+        buffer[pos + 11] = color.A;
     }
     void writeXformToBuffer(int index, Transform2D xform)
     {
@@ -451,13 +460,13 @@ public class StrokeStore
         buffer[pos + 6] = 0;
         buffer[pos + 7] = xform.Origin.Y;
     }
-    void writeCUstomDataToBuffer(int index, float[] custom)
+    void writeCustomDataToBuffer(int index, float[] custom)
     {
         int pos = index * bufferStride;
-        buffer[pos + 8] = custom[0];
-        buffer[pos + 9] = custom[1];
-        buffer[pos + 10] = custom[2];
-        buffer[pos + 11] = custom[3];
+        buffer[pos + 12] = custom[0];
+        buffer[pos + 13] = custom[1];
+        buffer[pos + 14] = custom[2];
+        buffer[pos + 15] = custom[3];
     }
 
     public void clear()
@@ -565,6 +574,6 @@ public class StrokeStore
     Span<float> getCustom(int index)
     {
         int pos = index * bufferStride;
-        return buffer.AsSpan<float>(pos + 8, 4);
+        return buffer.AsSpan<float>(pos + 12, 4);
     }
 }
