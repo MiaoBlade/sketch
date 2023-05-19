@@ -2,42 +2,6 @@ using Godot;
 using System;
 using System.Collections.Generic;
 
-class CollideObject
-{
-    public Vector2 start;
-    public Vector2 end;
-
-    public float radius;
-    public float cx;
-    public float cy;
-    public float rs;
-    public float re;
-    public float rmax;
-
-    public Vector2 dir;
-    public float mag;
-
-
-    public List<int> results = new List<int>();
-
-    public CollideObject(StrokeElement s, StrokeElement e)
-    {
-        start = s.pos;
-        end = e.pos;
-        cx = (s.pos.X + e.pos.X) / 2;
-        cy = (s.pos.Y + e.pos.Y) / 2;
-        rs = s.hsize;
-        re = e.hsize;
-
-        radius = (s.pos - e.pos).Length() / 2 + s.hsize + e.hsize;
-
-        dir = e.pos - s.pos;
-        mag = dir.Length();
-        dir = dir / mag;
-
-        rmax = Math.Max(rs, re);
-    }
-}
 public struct StrokeElement
 {
     public int ID = 0;
@@ -63,214 +27,6 @@ public struct StrokeState
     }
 }
 
-class CellStore
-{
-    float gridDim = 100;
-    public int elemCount = 0;
-    public int ID = 0;
-    public CellStore next = null;
-    public CellStore prev = null;
-    public List<StrokeElement> elems = new List<StrokeElement>();
-    public void addStroke(StrokeElement elem)
-    {
-        elems.Add(elem);
-        elemCount++;
-    }
-    public void clear()
-    {
-        elems.Clear();
-        elemCount = 0;
-    }
-    public void eraseCollide(CollideObject co)
-    {
-        float lbound = ID * gridDim;
-        float hbound = lbound + gridDim;
-
-        if (co.cx + co.radius < lbound)
-        {
-            return;
-        }
-        if (co.cx - co.radius > hbound)
-        {
-            return;
-        }
-        if (co.start.X + co.rs < lbound && co.end.X + co.re < lbound)
-        {
-            return;
-        }
-        if (co.start.X - co.rs > hbound && co.end.X - co.re > hbound)
-        {
-            return;
-        }
-        for (int i = 0; i < elems.Count; i++)
-        {
-            StrokeElement se = elems[i];
-            if (se.ID == -1)
-            {
-                continue;
-            }
-
-            if (co.cx + co.radius < se.pos.X - se.hsize || co.cx - co.radius > se.pos.X + se.hsize)
-            {
-                continue;
-            }
-            if (co.cy + co.radius < se.pos.Y - se.hsize || co.cy - co.radius > se.pos.Y + se.hsize)
-            {
-                continue;
-            }
-
-            Vector2 t = se.pos - co.start;
-
-            float prj = t.Dot(co.dir);
-
-            if (prj < -co.rs - se.hsize || prj > co.mag + co.re + se.hsize)
-            {
-                continue;
-            }
-            if (prj < 0)
-            {
-                if (t.Length() < se.hsize + co.rs)
-                {
-                    co.results.Add(se.ID);
-
-                }
-                continue;
-            }
-            if (prj > co.mag)
-            {
-                if (co.end.DistanceTo(se.pos) < se.hsize + co.re)
-                {
-                    co.results.Add(se.ID);
-
-                }
-                continue;
-            }
-            float d = MathF.Sqrt(t.LengthSquared() - prj * prj);
-
-            if (d < se.hsize + co.rs + (co.re - co.rs) * prj / co.mag)
-            {
-                co.results.Add(se.ID);
-                se.ID = -1;
-            }
-
-        }
-
-    }
-}
-class RowStore
-{
-    public int elemCount = 0;
-    public int CellCount = 0;
-    float gridDim = 100;
-    public int ID = 0;
-    public RowStore next = null;
-    public RowStore prev = null;
-    public CellStore entry = new CellStore();
-    public void clear()
-    {
-        CellStore start = entry.next;
-        while (start != null)
-        {
-            start.clear();
-            start.prev.next = null;
-            start.prev = null;
-            start = start.next;
-
-        }
-        CellCount = 0;
-        elemCount = 0;
-    }
-    public void eraseCollide(CollideObject co)
-    {
-        float lbound = ID * gridDim;
-        float hbound = lbound + gridDim;
-
-        if (co.cy + co.radius < lbound)
-        {
-            return;
-        }
-        if (co.cy - co.radius > hbound)
-        {
-            return;
-        }
-        if (co.start.Y + co.rs < lbound && co.end.Y + co.re < lbound)
-        {
-            return;
-        }
-        if (co.start.Y - co.rs > hbound && co.end.Y - co.re > hbound)
-        {
-            return;
-        }
-        CellStore cs = entry.next;
-        while (cs != null)
-        {
-            cs.eraseCollide(co);
-            cs = cs.next;
-
-        }
-    }
-    public void addStroke(StrokeElement elem)
-    {
-        elemCount++;
-        CellStore cs = findOrInsertCellStore(elem.pos);
-        cs.addStroke(elem);
-    }
-    CellStore findOrInsertCellStore(Vector2 pos)
-    {
-        int id = Mathf.FloorToInt(pos.X / gridDim);
-        if (entry.next == null)
-        {
-            //we dont have any rowstore,just add new one
-            entry.next = new CellStore();
-            entry.next.prev = entry;
-            entry.next.ID = id;
-            CellCount++;
-            return entry.next;
-        }
-        CellStore cs = entry.next;
-        CellStore newCS;
-        while (cs != null)
-        {
-            if (cs.ID == id)
-            {
-                // found it
-                return cs;
-            }
-            else if (cs.ID > id)
-            {
-                //insert here
-                newCS = new CellStore();
-                newCS.ID = id;
-                newCS.prev = cs.prev;
-                newCS.next = cs;
-
-                cs.prev.next = newCS;
-                cs.prev = newCS;
-                CellCount++;
-                return newCS;
-            }
-            else
-            {
-                //jump next
-                if (cs.next == null)
-                {
-                    break;
-                }
-                else
-                {
-                    cs = cs.next;
-                }
-            }
-        }
-        //we are the biggest,add
-        newCS = new CellStore();
-        newCS.ID = id;
-        newCS.prev = cs;
-        cs.next = newCS;
-        CellCount++;
-        return newCS;
-    }
-}
 public class StrokeStore
 {
     static float tau_f = (float)Math.Tau;
@@ -286,7 +42,7 @@ public class StrokeStore
     public StrokeElement lastStrokeElement;
 
     StrokeState strokeState;
-    RowStore entry = new RowStore();//linklist root,next point to smallest id
+    RowCollider entry = new RowCollider();//linklist root,next point to smallest id
     public StrokeStore()
     {
         buffer = new float[capacity * bufferStride];
@@ -416,7 +172,7 @@ public class StrokeStore
 
 
         elem.ID = elemCount;
-        RowStore rs = findOrInsertRowStore(elem.pos);
+        RowCollider rs = findOrInsertRowStore(elem.pos);
         rs.addStroke(elem);
         elemCount++;
         lastStrokeElement = elem;
@@ -471,7 +227,7 @@ public class StrokeStore
 
     public void clear()
     {
-        RowStore start = entry.next;
+        RowCollider start = entry.next;
         while (start != null)
         {
             start.clear();
@@ -488,7 +244,7 @@ public class StrokeStore
     {
         CollideObject co = new CollideObject(start, end);
 
-        RowStore rs = entry.next;
+        RowCollider rs = entry.next;
         while (rs != null)
         {
             rs.eraseCollide(co);
@@ -514,20 +270,20 @@ public class StrokeStore
         // buffer[pos + 6] = 0;
         // buffer[pos + 7] = elem.pos.Y;
     }
-    RowStore findOrInsertRowStore(Vector2 pos)
+    RowCollider findOrInsertRowStore(Vector2 pos)
     {
         int id = Mathf.FloorToInt(pos.Y / gridDim);
         if (entry.next == null)
         {
             //we dont have any rowstore,just add new one
-            entry.next = new RowStore();
+            entry.next = new RowCollider();
             entry.next.prev = entry;
             entry.next.ID = id;
             RowCount++;
             return entry.next;
         }
-        RowStore rs = entry.next;
-        RowStore newRS;
+        RowCollider rs = entry.next;
+        RowCollider newRS;
         while (rs != null)
         {
             if (rs.ID == id)
@@ -538,7 +294,7 @@ public class StrokeStore
             else if (rs.ID > id)
             {
                 //insert here
-                newRS = new RowStore();
+                newRS = new RowCollider();
                 newRS.ID = id;
                 newRS.prev = rs.prev;
                 newRS.next = rs;
@@ -564,7 +320,7 @@ public class StrokeStore
             }
         }
         //we are the biggest,add
-        newRS = new RowStore();
+        newRS = new RowCollider();
         newRS.ID = id;
         newRS.prev = rs;
         rs.next = newRS;
