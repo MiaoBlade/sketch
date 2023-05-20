@@ -11,11 +11,13 @@ void vertex(){
 	VERTEX.x=pos.x;
 	VERTEX.y=pos.y;
 	//COLOR=vec4(1.0,0.2,0.2,1.0);
-	//idcolor=float(INSTANCE_ID-(INSTANCE_ID>>1<<1));
+	idvalue=float(INSTANCE_ID-(INSTANCE_ID>>1<<1));
 	idcolor=COLOR;
 	
 }
 void fragment() {
-	//COLOR=vec4(idcolor,0.2,0.2,1.0);
+	//COLOR=vec4(idvalue,0.2,0.2,1.0);
 	COLOR=idcolor;
+	COLOR.a=1.0;
+	//COLOR.a=1.0-idvalue*0.3;
 }

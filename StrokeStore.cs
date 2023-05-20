@@ -17,10 +17,32 @@ public struct StrokeElement
     public float size = 1;
     public float hsize = 0.5f;
 }
+public class StrokePoint
+{
+    public Vector2 pos;
+    public float hsize;
+
+    public StrokePoint(Vector2 p, float r)
+    {
+        pos = p;
+        hsize = r;
+    }
+
+}
 public struct StrokeState
 {
     public int strokeCount = 0;
     public bool lastIsFirst = false;
+    public bool useDebugColor = false;
+
+    public Color color = Color.Color8(100, 50, 50, 255);
+    public StrokePoint p0 = null;
+    public StrokePoint p1 = null;
+
+    public float p0_dir = float.NaN;
+    public int p0_id = 0;//smoothed dir
+    public float p0_xdir = 0;//xform dir
+
     public StrokeState()
     {
 
@@ -29,6 +51,8 @@ public struct StrokeState
 
 public class StrokeStore
 {
+    static Color COLOR_KEYPOINT = Color.Color8(255, 0, 0, 255);
+    static Color COLOR_INTERP = Color.Color8(0, 0, 0, 255);
     static float tau_f = (float)Math.Tau;
     RandomNumberGenerator rnd = new RandomNumberGenerator();
     float gridDim = 100;
@@ -46,94 +70,103 @@ public class StrokeStore
     public StrokeStore()
     {
         buffer = new float[capacity * bufferStride];
+        strokeState.useDebugColor = false;
     }
 
-    public void addPureStroke(StrokeElement elem)
+    public void addPureStroke(StrokePoint p)
     {
-        insertStroke(elem, Transform2D.Identity);
+        insertStroke(new StrokeElement(p.pos, p.hsize, 0), Transform2D.Identity, COLOR_KEYPOINT);
     }
-    public void addStroke(StrokeElement elem, bool isFirst = false)
+    public void addStroke(StrokePoint p, bool isFirst = false)
     {
-        if (isFirst)
+        StrokeElement elem = new StrokeElement(p.pos, p.hsize, 0);
+        var p0 = strokeState.p0;
+        var p1 = strokeState.p1;
+        var p2 = p;
+        if (p0 != null)
         {
-            insertStroke(elem, Transform2D.Identity.RotatedLocal(elem.dir));
-            strokeState.lastIsFirst = true;
-        }
-        else
-        {
-            var dist = elem.pos.DistanceTo(lastStrokeElement.pos);
-            if (dist < distIgnoreThreshold)
+            var dist_21 = p2.pos.DistanceTo(p1.pos);
+            if (dist_21 < distIgnoreThreshold)
             {
-                //too close,skip
+                //too close,discard
                 return;
             }
-            Vector2 dir = (elem.pos - lastStrokeElement.pos) / dist;
-            Transform2D xform;
-            var radianDir = dir.Angle();
-            elem.dir = radianDir;
-            float[] customData = new float[4];
-            float size_half = elem.hsize;
-            //fix last stroke connection
-            float deltaAngle = radianDir - lastStrokeElement.dir;
-            if (strokeState.lastIsFirst)
-            {
-                xform = Transform2D.Identity.RotatedLocal(-deltaAngle);
-                xform.Origin = lastStrokeElement.pos;
-                writeXformToBuffer(lastStrokeElement.ID, xform);
-                strokeState.lastIsFirst = false;
-            }
-            else
-            {
-                var custom = getCustom(lastStrokeElement.ID);
-                var vert = new Vector2(lastStrokeElement.hsize, -lastStrokeElement.hsize);
-                var vert_r = vert.Rotated(deltaAngle);
-                custom[0] = packPosition(vert_r.X, vert_r.Y);
-                vert.Y = lastStrokeElement.hsize;
-                vert_r = vert.Rotated(deltaAngle);
-                custom[2] = packPosition(vert_r.X, vert_r.Y);
-            }
+            // p1 dir
+            var dir0 = strokeState.p0_dir;
+            var dir1 = interpolateDir(p1.pos - p0.pos, p2.pos - p1.pos);
 
-            if (dist < lastStrokeElement.hsize + size_half)
+            //try interpolate p0 p1
+            var dist_10 = p0.pos.DistanceTo(p1.pos);
+            int id_p1;
+            if (dist_10 > p0.hsize + p1.hsize)
             {
-                //too close,just add
-                elem.dir = radianDir;
+                //interpolate
+                float space = Math.Max(distThreshold, p0.hsize);
+                int num_interp = Mathf.CeilToInt((dist_10 - p0.hsize - p1.hsize) / space);
 
-                customData[0] = packPosition(size_half, -size_half);
-                customData[1] = packPosition(-(dist - lastStrokeElement.hsize), -size_half);
-                customData[2] = packPosition(size_half, size_half);
-                customData[3] = packPosition(-(dist - lastStrokeElement.hsize), size_half);
-                insertStroke(elem, Transform2D.Identity.RotatedLocal(-radianDir), customData);
-            }
-            else
-            {
-                StrokeElement interp_base = lastStrokeElement;
-                float l_real = dist - elem.hsize - lastStrokeElement.hsize;
-                float num_interp = Math.Max(1, Mathf.Floor(l_real / distThreshold));
-                float d_interp = l_real / num_interp;
-
-                //interpoation
-                var l_start = d_interp / 2 + interp_base.hsize;
-                var s_start = interp_base.hsize + (elem.hsize - interp_base.hsize) / num_interp;
-                var s_step = (elem.hsize - interp_base.hsize) / num_interp;
-
-                float r_interp = d_interp / 2;
+                var c_extend = Math.Min(dist_10 / 4, 10);
+                var c0 = p0.pos + c_extend * Vector2.Right.Rotated(dir0);
+                var c1 = p1.pos - c_extend * Vector2.Right.Rotated(dir1);
+                var curve = new CubicCurve(p0.pos, c0, c1, p1.pos);
+                var curve_pts = new Vector2[num_interp];
+                var curve_hsize = new float[num_interp];
 
                 for (int i = 0; i < num_interp; i++)
                 {
-                    size_half = s_start + s_step * i;
-
-                    customData[0] = packPosition(r_interp, -size_half);
-                    customData[1] = packPosition(-r_interp, -size_half);
-                    customData[2] = packPosition(r_interp, size_half);
-                    customData[3] = packPosition(-r_interp, size_half);
-                    var newElem = new StrokeElement(interp_base.pos + dir * (l_start + d_interp * i), size_half * 2, 0);
-                    insertStroke(newElem, Transform2D.Identity.RotatedLocal(-radianDir), customData);
+                    var t = (i + 1f) / (num_interp + 1);
+                    curve_pts[i] = curve.getPoint(t);
+                    curve_hsize[i] = p0.hsize + (p1.hsize - p0.hsize) * t;
                 }
+                //fix p0
+                fix_p0(curve_pts[0], curve_hsize[0]);
 
-                insertStroke(elem, Transform2D.Identity.RotatedLocal(-radianDir));
+                if (curve_pts.Length > 1)
+                {
+                    appendInterpElement(curve_pts[0], curve_hsize[0], p0.pos, p0.hsize, curve_pts[1], curve_hsize[1]);
+                    for (int i = 1; i < num_interp - 1; i++)
+                    {
+                        appendInterpElement(curve_pts[i], curve_hsize[i], curve_pts[i - 1], curve_hsize[i - 1], curve_pts[i + 1], curve_hsize[i + 1]);
+                    }
+                    appendInterpElement(curve_pts[num_interp - 1], curve_hsize[num_interp - 1], curve_pts[num_interp - 2], curve_hsize[num_interp - 2], p1.pos, p1.hsize);
+                }
+                else
+                {
+                    appendInterpElement(curve_pts[0], curve_hsize[0], p0.pos, p0.hsize, p1.pos, p1.hsize);
+                }
+                id_p1 = append_p1(p1.pos, p1.hsize, curve_pts[num_interp - 1], curve_hsize[num_interp - 1], p2.pos);
+            }
+            else
+            {
+                //line
+                fix_p0(p1.pos, p1.hsize);
+                id_p1 = append_p1(p1.pos, p1.hsize, p0.pos, p0.hsize, p2.pos);
+            }
+
+            strokeState.p0_dir = dir1;
+            strokeState.p0_id = id_p1;
+        }
+        else
+        {
+            if (p1 != null)//this is the second point
+            {
+                //init for the first point
+                strokeState.p0_dir = (p.pos - p1.pos).Angle();
+                strokeState.p0_xdir = strokeState.p0_dir;
+
+                var p0_elem = new StrokeElement(p1.pos, p1.hsize, strokeState.p0_xdir);
+                strokeState.p0_id = insertStroke(p0_elem, Transform2D.Identity.RotatedLocal(-strokeState.p0_xdir), strokeState.useDebugColor ? COLOR_KEYPOINT : strokeState.color);
 
             }
         }
+        strokeState.p0 = strokeState.p1;
+        strokeState.p1 = p;
+    }
+    public void endStroke()
+    {
+        strokeState.p1 = null;
+        strokeState.p0 = null;
+        strokeState.lastIsFirst = false;
+        strokeState.strokeCount++;
     }
     float packPosition(float x, float y)
     {
@@ -144,7 +177,7 @@ public class StrokeStore
 
         return BitConverter.UInt32BitsToSingle(bits);
     }
-    void insertStroke(StrokeElement elem, Transform2D xform, float[] custom = null)
+    int insertStroke(StrokeElement elem, Transform2D xform, Color c, float[] custom = null)
     {
         if ((elemCount + 1) * bufferStride >= buffer.Length)
         {
@@ -155,7 +188,7 @@ public class StrokeStore
         xform.Origin = elem.pos;
         int pos = elemCount * bufferStride;
         writeXformToBuffer(elemCount, xform);
-        writeColorToBuffer(elemCount, Color.Color8(255, 150, 0, 255));
+        writeColorToBuffer(elemCount, c);
 
         if (custom != null)
         {
@@ -176,6 +209,7 @@ public class StrokeStore
         rs.addStroke(elem);
         elemCount++;
         lastStrokeElement = elem;
+        return elem.ID;
     }
     void overrideStroke(StrokeElement elem, Transform2D xform, float[] custom = null)
     {
@@ -258,17 +292,82 @@ public class StrokeStore
 
         }
     }
+    float interpolateDir(Vector2 back, Vector2 front)
+    {
+        return (back.Angle() + front.Angle()) / 2;
+    }
+    void fix_p0(Vector2 next, float hsize)
+    {
+        var custom = getCustom(strokeState.p0_id);
+        var vec = next - strokeState.p0.pos;
+        var mag = vec.Length() / 2;
+        var angle = vec.Angle() - strokeState.p0_xdir;
+        var hsize_m = (hsize + strokeState.p0.hsize) / 2;
+        var v0 = new Vector2(mag, -hsize_m).Rotated(angle);
+        var v2 = new Vector2(mag, hsize_m).Rotated(angle);
+
+
+        custom[0] = packPosition(v0.X, v0.Y);
+        custom[2] = packPosition(v2.X, v2.Y);
+    }
+    void appendInterpElement(Vector2 p, float hsize, Vector2 prev, float hsize_p, Vector2 next, float hsize_n)
+    {
+        var vec_p = p - prev;
+        var vec_n = next - p;
+        var angle_p = vec_p.Angle();
+        var angle_n = vec_n.Angle();
+
+        var hsize_p_m = (hsize + hsize_p) / 2;
+        var hsize_n_m = (hsize + hsize_n) / 2;
+
+        var mag_p = vec_p.Length() / 2;
+        var mag_n = vec_n.Length() / 2;
+
+        var v0 = new Vector2(mag_n, -hsize_n_m).Rotated((angle_n - angle_p));
+        var v2 = new Vector2(mag_n, hsize_n_m).Rotated((angle_n - angle_p));
+
+        var custom = new float[4];
+        custom[0] = packPosition(v0.X, v0.Y);
+        custom[2] = packPosition(v2.X, v2.Y);
+        custom[1] = packPosition(-mag_p, -hsize_p_m);
+        custom[3] = packPosition(-mag_p, hsize_p_m);
+
+        var p_elem = new StrokeElement(p, hsize, angle_p);
+        insertStroke(p_elem, Transform2D.Identity.RotatedLocal(-angle_p), strokeState.useDebugColor ? COLOR_INTERP : strokeState.color, custom);
+    }
+
+    int append_p1(Vector2 p, float hsize, Vector2 prev, float hsize_p, Vector2 next)
+    {
+        var vec_p = p - prev;
+        var vec_n = next - p;
+        var angle_p = vec_p.Angle();
+        var angle_n = vec_n.Angle();
+
+        var hsize_p_m = (hsize + hsize_p) / 2;
+
+        var mag_p = vec_p.Length() / 2;
+
+        var v0 = new Vector2(hsize, -hsize).Rotated((angle_n - angle_p));
+        var v2 = new Vector2(hsize, hsize).Rotated((angle_n - angle_p));
+
+        var custom = new float[4];
+        custom[0] = packPosition(v0.X, v0.Y);
+        custom[2] = packPosition(v2.X, v2.Y);
+        custom[1] = packPosition(-mag_p, -hsize_p_m);
+        custom[3] = packPosition(-mag_p, hsize_p_m);
+
+        var p_elem = new StrokeElement(p, hsize, angle_p);
+
+
+        strokeState.p0_xdir = angle_p;
+
+        return insertStroke(p_elem, Transform2D.Identity.RotatedLocal(-angle_p), strokeState.useDebugColor ? COLOR_KEYPOINT : strokeState.color, custom);
+    }
     void hideElement(int id)
     {
         int pos = id * bufferStride;
         buffer[pos] = 0;
         buffer[pos + 1] = 0;
-        // buffer[pos + 2] = 0;
-        // buffer[pos + 3] = elem.pos.X;
-        // buffer[pos + 4] = sin_s;
-        // buffer[pos + 5] = cos_s;
-        // buffer[pos + 6] = 0;
-        // buffer[pos + 7] = elem.pos.Y;
     }
     RowCollider findOrInsertRowStore(Vector2 pos)
     {

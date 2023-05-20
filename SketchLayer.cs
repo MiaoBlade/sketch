@@ -37,16 +37,17 @@ public class SketchLayer
     }
     public void beginStroke(Vector2 vec, float size)
     {
-        StrokeElement se = new StrokeElement(vec - pos, size, 0);
-        store.addStroke(se,true);
+        StrokePoint se = new StrokePoint(vec - pos, size / 2);
+        store.addStroke(se, true);
     }
     public void endStroke()
     {
+        store.endStroke();
     }
     public void appendStroke(Vector2 vec, float size)
     {
         var layerCoord = vec - pos;
-        StrokeElement se=new StrokeElement(layerCoord, size, 0);
+        StrokePoint se = new StrokePoint(layerCoord, size / 2);
         store.addStroke(se);
     }
     public void beginDrag(Vector2 vec)

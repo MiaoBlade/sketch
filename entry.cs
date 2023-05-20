@@ -142,29 +142,37 @@ public partial class entry : Node2D
     }
     void debug_stroke_interp()
     {
+        //interp test
+        // pad.currentLayer.store.addStroke(new StrokePoint(new Vector2(200, 200), 5));
+        // pad.currentLayer.store.addStroke(new StrokePoint(new Vector2(400, 400), 5));
+        // pad.currentLayer.store.addStroke(new StrokePoint(new Vector2(600, 400), 5));
+        pad.currentLayer.store.addStroke(new StrokePoint(new Vector2(600, 200), 5));
+        pad.currentLayer.store.addStroke(new StrokePoint(new Vector2(600, 212), 5));
+        pad.currentLayer.store.addStroke(new StrokePoint(new Vector2(600, 250), 5));
+
         // float x = 500;
         // float y = 200;
         // float x_step = 5;
         // float y_step = 2;
-        // pad.currentLayer.store.addStroke(new StrokeElement(new Vector2(x, y), 2, 0), true);
+        // pad.currentLayer.store.addStroke(new StrokePoint(new Vector2(x, y), 2), true);
 
         // for (int i = 0; i < 10; i++)
         // {
         //     x += x_step;
         //     y += y_step;
-        //     pad.currentLayer.store.addStroke(new StrokeElement(new Vector2(x, y), 2, 0));
+        //     pad.currentLayer.store.addStroke(new StrokePoint(new Vector2(x, y), 2));
         //     y_step *= -1;
         // }
-        // pad.canvas.drawStroke(pad.currentLayer);
 
-        var bcurve=new CubicCurve(new Vector2(300,200),new Vector2(400,300),new Vector2(500,100),new Vector2(600,200));
+        // var bcurve = new CubicCurve(new Vector2(300, 200), new Vector2(400, 300), new Vector2(500, 100), new Vector2(600, 200));
 
-        for (int i = 0; i < 21; i++)
-        {
-            // var p=bcurve.getPoint(((float)Math.Sqrt(i/10.0)));
-            var p=bcurve.getPoint((float)(i/20.0));
-            pad.currentLayer.store.addPureStroke(new StrokeElement(p, 5, 0));
-        }
+        // for (int i = 0; i < 21; i++)
+        // {
+        //     // var p=bcurve.getPoint(((float)Math.Sqrt(i/10.0)));
+        //     var p = bcurve.getPoint((float)(i / 20.0));
+        //     pad.currentLayer.store.addPureStroke(new StrokePoint(p, 5));
+        // }
+        pad.currentLayer.store.endStroke();
         pad.canvas.drawStroke(pad.currentLayer);
     }
 }
