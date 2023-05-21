@@ -1,22 +1,36 @@
 using Godot;
 using System;
 
-public partial class entry : Node2D
+public partial class entry : SubViewportContainer
 {
     [Export]
     UI ui;
+    [Export]
+    Canvas canvas;
     public SketchPad pad;
+    public Rid vp_id;
     public override void _Ready()
     {
         Input.UseAccumulatedInput = false;
+        Engine.MaxFps = 30;
+        vp_id = GetViewport().GetViewportRid();
+        RenderingServer.ViewportSetClearMode(vp_id, RenderingServer.ViewportClearMode.OnlyNextFrame);
+        RenderingServer.SetDefaultClearColor(Color.Color8(240, 240, 245));
 
         pad = new SketchPad();
-        Canvas canvas = GetNode<Canvas>("canvas");
+        canvas.ProcessMode = ProcessModeEnum.Pausable;
         pad.canvas = canvas;
-        pad.grid = GetNode<Grid>("grid");
+        pad.grid = GetNode<Grid>("%grid");
         pad.ui = ui;
         GetViewport().SizeChanged += viewportChange;
         GetWindow().MinSize = new Vector2I(640, 480);
+        GetTree().Paused = true;
+
+        viewportChange();
+
+        var vp = GetNode<SubViewport>("%SubViewport");
+        RenderingServer.ViewportSetRenderDirectToScreen(vp.GetViewportRid(), true);
+
     }
 
     // Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -25,10 +39,10 @@ public partial class entry : Node2D
         GetWindow().Title = pad.currentLayer.store.elemCount.ToString() + " ";
         pad.Process(delta);
     }
-    public override void _Draw()
-    {
-        DrawRect(GetViewportRect(), Color.Color8(240, 240, 245));
-    }
+    // public override void _Draw()
+    // {
+    //     DrawRect(GetViewportRect(), Color.Color8(240, 240, 245));
+    // }
     public override void _UnhandledInput(InputEvent @event)
     {
         if (@event is InputEventMouseButton eventMouseButton)
@@ -71,6 +85,7 @@ public partial class entry : Node2D
                 {
                     case Key.Kp4:
                         pad.setGrid(GridType.Square);
+                        RenderingServer.ViewportSetClearMode(vp_id, RenderingServer.ViewportClearMode.OnlyNextFrame);
                         break;
 
                     default:
@@ -84,26 +99,32 @@ public partial class entry : Node2D
         if (@event.IsActionPressed("sketchpad_clear"))
         {
             pad.clear();
+            RenderingServer.ViewportSetClearMode(vp_id, RenderingServer.ViewportClearMode.OnlyNextFrame);
         }
         else if (@event.IsActionPressed("sketchpad_grid_hexgon"))
         {
             pad.setGrid(GridType.Hexgon);
+            RenderingServer.ViewportSetClearMode(vp_id, RenderingServer.ViewportClearMode.OnlyNextFrame);
         }
         else if (@event.IsActionPressed("sketchpad_next"))
         {
             pad.nextPage();
+            RenderingServer.ViewportSetClearMode(vp_id, RenderingServer.ViewportClearMode.OnlyNextFrame);
         }
         else if (@event.IsActionPressed("sketchpad_prev"))
         {
             pad.prevPage();
+            RenderingServer.ViewportSetClearMode(vp_id, RenderingServer.ViewportClearMode.OnlyNextFrame);
         }
         else if (@event.IsActionPressed("sketchpad_erase"))
         {
             pad.toggleEraseMode();
+            RenderingServer.ViewportSetClearMode(vp_id, RenderingServer.ViewportClearMode.OnlyNextFrame);
         }
         else if (@event.IsActionPressed("sketchpad_debug"))
         {
             pad.toggleDebugPanel();
+            RenderingServer.ViewportSetClearMode(vp_id, RenderingServer.ViewportClearMode.OnlyNextFrame);
         }
         else if (@event is InputEventMouseMotion eventMouseMotion)
         {
@@ -121,6 +142,7 @@ public partial class entry : Node2D
     void viewportChange()
     {
         pad.viewportChange(GetViewportRect());
+        Size = GetViewportRect().Size;
     }
 
     void debug_generate_stroke()
