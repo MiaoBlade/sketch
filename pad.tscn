@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://dc1d2edf7xs4t"]
+[gd_scene load_steps=11 format=3 uid="uid://dc1d2edf7xs4t"]
 
 [ext_resource type="Script" path="res://entry.cs" id="1_ln017"]
 [ext_resource type="Script" path="res://Canvas.cs" id="2_jtn6x"]
@@ -13,6 +13,13 @@ shader = ExtResource("3_r37tk")
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ncb4f"]
 bg_color = Color(0.607843, 0.607843, 0.607843, 1)
 corner_detail = 11
+
+[sub_resource type="LabelSettings" id="LabelSettings_hk6ru"]
+font_color = Color(0.152941, 0.152941, 0.152941, 1)
+
+[sub_resource type="LabelSettings" id="LabelSettings_vgyrx"]
+font_size = 12
+font_color = Color(0.384314, 0.384314, 0.384314, 1)
 
 [node name="root" type="SubViewportContainer" node_paths=PackedStringArray("ui", "canvas")]
 process_mode = 1
@@ -39,11 +46,12 @@ texture_filter = 4
 material = SubResource("ShaderMaterial_f85w7")
 script = ExtResource("2_jtn6x")
 
-[node name="ui" type="Node2D" parent="SubViewport" node_paths=PackedStringArray("bg", "debug", "layerIndicator")]
+[node name="ui" type="Node2D" parent="SubViewport" node_paths=PackedStringArray("bg", "debug", "layerIndicator", "strokeIndicator")]
 script = ExtResource("4_041qh")
 bg = NodePath("statusbar")
 debug = NodePath("debugPanel")
-layerIndicator = NodePath("statusbar/VBoxContainer/CenterContainer/layerIndicator")
+layerIndicator = NodePath("statusbar/VBoxContainer/hflow/layerIndicator")
+strokeIndicator = NodePath("statusbar/VBoxContainer/hflow/strokeIndicator")
 
 [node name="statusbar" type="PanelContainer" parent="SubViewport/ui"]
 offset_right = 584.0
@@ -61,17 +69,25 @@ size_flags_vertical = 13
 size_flags_stretch_ratio = 0.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_ncb4f")
 
-[node name="CenterContainer" type="CenterContainer" parent="SubViewport/ui/statusbar/VBoxContainer"]
+[node name="hflow" type="MarginContainer" parent="SubViewport/ui/statusbar/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
-size_flags_stretch_ratio = 0.0
 mouse_filter = 2
+theme_override_constants/margin_right = 13
 
-[node name="layerIndicator" type="Label" parent="SubViewport/ui/statusbar/VBoxContainer/CenterContainer"]
+[node name="layerIndicator" type="Label" parent="SubViewport/ui/statusbar/VBoxContainer/hflow"]
 layout_mode = 2
-theme = ExtResource("4_igdwo")
 text = "1/1
 "
+label_settings = SubResource("LabelSettings_hk6ru")
+horizontal_alignment = 1
+
+[node name="strokeIndicator" type="Label" parent="SubViewport/ui/statusbar/VBoxContainer/hflow"]
+layout_mode = 2
+text = "456"
+label_settings = SubResource("LabelSettings_vgyrx")
+horizontal_alignment = 2
+vertical_alignment = 2
 
 [node name="debugPanel" type="PanelContainer" parent="SubViewport/ui"]
 offset_right = 257.0

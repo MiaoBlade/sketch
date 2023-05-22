@@ -10,6 +10,8 @@ public partial class UI : Node2D
     PanelContainer debug;
     [Export]
     Label layerIndicator;
+    [Export]
+    Label strokeIndicator;
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
     {
@@ -24,7 +26,7 @@ public partial class UI : Node2D
     public void updateStatus(SketchPad pad)
     {
         layerIndicator.Text = $"{pad.currentLayerID + 1}/{pad.layers.Count}";
-
+        strokeIndicator.Text = $"{pad.currentLayer.store.elemCount}";
     }
     public void toggleDebugPanel()
     {

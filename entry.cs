@@ -37,17 +37,16 @@ public partial class entry : SubViewportContainer
 
         MouseDefaultCursorShape = pad.drawMode == DrawMode.Pen ? CursorShape.Cross : CursorShape.Arrow;
 
+        GetWindow().Title = "Sketch pad";
+        ui.updateStatus(pad);
+
     }
 
     // Called every frame. 'delta' is the elapsed time since the previous frame.
     public override void _Process(double delta)
     {
-        GetWindow().Title = pad.currentLayer.store.elemCount.ToString() + " ";
+        
     }
-    // public override void _Draw()
-    // {
-    //     DrawRect(GetViewportRect(), Color.Color8(240, 240, 245));
-    // }
     public override void _UnhandledInput(InputEvent @event)
     {
         if (@event is InputEventMouseButton eventMouseButton)

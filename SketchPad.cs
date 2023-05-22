@@ -89,6 +89,7 @@ public class SketchPad
                 currentLayer.appendErase(vec, mapPressureToSize(eraseSizeMultiplier * pressure));
             }
             canvas.drawStroke(currentLayer);
+            ui.updateStatus(this);
         }
         else
         {
@@ -158,6 +159,7 @@ public class SketchPad
     {
         currentLayer.clear();
         canvas.drawStroke(currentLayer);
+        ui.updateStatus(this);
     }
     public void nextPage()
     {
