@@ -84,22 +84,6 @@ public partial class entry : SubViewportContainer
                 GetViewport().SetInputAsHandled();
             }
         }
-        else if (@event is InputEventKey eventKey)
-        {
-            if (eventKey.Pressed)
-            {
-                switch (eventKey.Keycode)
-                {
-                    case Key.Kp4:
-                        pad.setGrid(GridType.Square);
-                        viewportRedraw();
-                        break;
-
-                    default:
-                        return;
-                }
-            }
-        }
     }
     public override void _Input(InputEvent @event)
     {
@@ -111,6 +95,11 @@ public partial class entry : SubViewportContainer
         else if (@event.IsActionPressed("sketchpad_grid_hexgon"))
         {
             pad.setGrid(GridType.Hexgon);
+            viewportRedraw();
+        }
+        else if (@event.IsActionPressed("sketchpad_grid_squre"))
+        {
+            pad.setGrid(GridType.Square);
             viewportRedraw();
         }
         else if (@event.IsActionPressed("sketchpad_next"))
