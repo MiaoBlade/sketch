@@ -38,11 +38,12 @@ public class SketchLayer
     public void beginStroke(Vector2 vec, float size)
     {
         StrokePoint se = new StrokePoint(vec - pos, size / 2);
-        store.addStroke(se, true);
+        store.addStroke(se);
     }
-    public void endStroke()
+    public void endStroke(Vector2 vec)
     {
-        store.endStroke();
+        StrokePoint se = new StrokePoint(vec - pos, 1);
+        store.endStroke(se);
     }
     public void appendStroke(Vector2 vec, float size)
     {

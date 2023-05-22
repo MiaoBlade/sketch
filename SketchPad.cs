@@ -57,14 +57,14 @@ public class SketchPad
             GD.Print("bad draw :", state);
         }
     }
-    public void endStroke()
+    public void endStroke(Vector2 vec)
     {
         if (state == PadState.Draw)
         {
             state = PadState.Idle;
             if (drawMode == DrawMode.Pen)
             {
-                currentLayer.endStroke();
+                currentLayer.endStroke(vec);
             }
             else
             {

@@ -60,7 +60,7 @@ public class StrokeStore
     public int elemCount = 0;
     public int RowCount = 0;
     float distThreshold = 5.0f;
-    float distIgnoreThreshold = 5f;
+    float distIgnoreThreshold = 1f;
     public int capacity = 8 * 1024;
     public float[] buffer;
     public StrokeElement lastStrokeElement;
@@ -77,7 +77,7 @@ public class StrokeStore
     {
         insertStroke(new StrokeElement(p.pos, p.hsize, 0), Transform2D.Identity, COLOR_KEYPOINT);
     }
-    public void addStroke(StrokePoint p, bool isFirst = false)
+    public void addStroke(StrokePoint p)
     {
         StrokeElement elem = new StrokeElement(p.pos, p.hsize, 0);
         var p0 = strokeState.p0;
@@ -161,8 +161,9 @@ public class StrokeStore
         strokeState.p0 = strokeState.p1;
         strokeState.p1 = p;
     }
-    public void endStroke()
+    public void endStroke(StrokePoint p)
     {
+        addStroke(p);
         strokeState.p1 = null;
         strokeState.p0 = null;
         strokeState.lastIsFirst = false;

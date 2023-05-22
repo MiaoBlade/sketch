@@ -61,7 +61,7 @@ public partial class entry : SubViewportContainer
                 else
                 {
                     GD.Print("draw stoped");
-                    pad.endStroke();
+                    pad.endStroke(eventMouseButton.Position);
                 }
                 GetViewport().SetInputAsHandled();
             }
@@ -181,7 +181,7 @@ public partial class entry : SubViewportContainer
                 break;
             }
         }
-        pad.endStroke();
+        pad.endStroke(Vector2.Zero);
     }
     void debug_stroke_interp()
     {
@@ -215,7 +215,7 @@ public partial class entry : SubViewportContainer
         //     var p = bcurve.getPoint((float)(i / 20.0));
         //     pad.currentLayer.store.addPureStroke(new StrokePoint(p, 5));
         // }
-        pad.currentLayer.store.endStroke();
+        pad.currentLayer.store.endStroke(new StrokePoint(Vector2.Zero,1));
         pad.canvas.drawStroke(pad.currentLayer);
     }
 }
