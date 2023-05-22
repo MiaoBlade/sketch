@@ -4,10 +4,6 @@ using System.Collections.Generic;
 
 public class SketchLayer
 {
-    static float tau_f = (float)Math.Tau;
-    RandomNumberGenerator rnd = new RandomNumberGenerator();
-
-    bool isDraging = false;
     Vector2 dragStart;
     Vector2 dragBase;//layer pos when drag start
 
@@ -53,14 +49,12 @@ public class SketchLayer
     }
     public void beginDrag(Vector2 vec)
     {
-        isDraging = true;
         dragBase = pos;
         dragStart = vec;
     }
     public void endDrag(Vector2 vec)
     {
         updateDrag(vec);
-        isDraging = false;
     }
     public void updateDrag(Vector2 vec)
     {

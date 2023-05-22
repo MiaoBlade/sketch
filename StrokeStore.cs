@@ -53,8 +53,6 @@ public class StrokeStore
 {
     static Color COLOR_KEYPOINT = Color.Color8(255, 0, 0, 255);
     static Color COLOR_INTERP = Color.Color8(0, 0, 0, 255);
-    static float tau_f = (float)Math.Tau;
-    RandomNumberGenerator rnd = new RandomNumberGenerator();
     float gridDim = 100;
     int bufferStride = 16;//8 for xform, 4 for color, 4 for custom
     public int elemCount = 0;
