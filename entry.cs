@@ -32,8 +32,10 @@ public partial class entry : SubViewportContainer
 
         viewportChange();
 
-        GetWindow().FocusEntered+=windowActive;
-        GetWindow().FocusExited+=windowIdle;
+        GetWindow().FocusEntered += windowActive;
+        GetWindow().FocusExited += windowIdle;
+
+        MouseDefaultCursorShape = pad.drawMode == DrawMode.Pen ? CursorShape.Cross : CursorShape.Arrow;
 
     }
 
@@ -41,7 +43,6 @@ public partial class entry : SubViewportContainer
     public override void _Process(double delta)
     {
         GetWindow().Title = pad.currentLayer.store.elemCount.ToString() + " ";
-        pad.Process(delta);
     }
     // public override void _Draw()
     // {
@@ -71,12 +72,14 @@ public partial class entry : SubViewportContainer
                 {
                     GD.Print("drag started");
                     pad.beginDrag(eventMouseButton.Position);
+                    MouseDefaultCursorShape = CursorShape.PointingHand;
                 }
                 else
                 {
                     GD.Print("drag stoped");
                     pad.endDrag(eventMouseButton.Position);
                     pad.setGrid(GridType.Refresh);
+                    MouseDefaultCursorShape = pad.drawMode == DrawMode.Pen ? CursorShape.Cross : CursorShape.Arrow;
                 }
                 GetViewport().SetInputAsHandled();
             }
@@ -124,6 +127,7 @@ public partial class entry : SubViewportContainer
         {
             pad.toggleEraseMode();
             viewportRedraw();
+            MouseDefaultCursorShape = pad.drawMode == DrawMode.Pen ? CursorShape.Cross : CursorShape.Arrow;
         }
         else if (@event.IsActionPressed("sketchpad_debug"))
         {
@@ -159,12 +163,12 @@ public partial class entry : SubViewportContainer
     void windowIdle()
     {
         RenderingServer.ViewportSetUpdateMode(GetViewport().GetViewportRid(), RenderingServer.ViewportUpdateMode.Disabled);
-        GetTree().Paused=true;
+        GetTree().Paused = true;
     }
     void windowActive()
     {
         RenderingServer.ViewportSetUpdateMode(GetViewport().GetViewportRid(), RenderingServer.ViewportUpdateMode.WhenVisible);
-        GetTree().Paused=false;
+        GetTree().Paused = false;
     }
     void debug_generate_stroke()
     {
@@ -215,7 +219,7 @@ public partial class entry : SubViewportContainer
         //     var p = bcurve.getPoint((float)(i / 20.0));
         //     pad.currentLayer.store.addPureStroke(new StrokePoint(p, 5));
         // }
-        pad.currentLayer.store.endStroke(new StrokePoint(Vector2.Zero,1));
+        pad.currentLayer.store.endStroke(new StrokePoint(Vector2.Zero, 1));
         pad.canvas.drawStroke(pad.currentLayer);
     }
 }

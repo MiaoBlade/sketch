@@ -5,13 +5,13 @@ public enum GridType
 {
     Square, None, Refresh, Hexgon
 }
-enum PadState
+public enum PadState
 {
     Drag,
     Draw,
     Idle
 }
-enum DrawMode
+public enum DrawMode
 {
     Pen,
     Erase
@@ -25,8 +25,8 @@ public class SketchPad
     public Canvas canvas;
     public Grid grid;
     public UI ui;
-    PadState state = PadState.Idle;
-    DrawMode drawMode = DrawMode.Pen;
+    public PadState state = PadState.Idle;
+    public DrawMode drawMode = DrawMode.Pen;
 
     float baseStrokeSize = 6;
     float defaultPressure = 0.5f;
@@ -216,21 +216,5 @@ public class SketchPad
     float mapPressureToSize(float p)
     {
         return Mathf.Sqrt(p) * baseStrokeSize;
-    }
-    public void Process(double delta)
-    {
-        if (state == PadState.Drag)
-        {
-            Input.SetDefaultCursorShape(Input.CursorShape.PointingHand);
-        }
-        else if (drawMode == DrawMode.Pen)
-        {
-            Input.SetDefaultCursorShape(Input.CursorShape.Cross);
-        }
-        else
-        {
-            Input.SetDefaultCursorShape(Input.CursorShape.Arrow);
-        }
-
     }
 }
