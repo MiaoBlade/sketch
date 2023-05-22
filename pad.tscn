@@ -15,7 +15,7 @@ bg_color = Color(0.607843, 0.607843, 0.607843, 1)
 corner_detail = 11
 
 [node name="root" type="SubViewportContainer" node_paths=PackedStringArray("ui", "canvas")]
-process_mode = 3
+process_mode = 1
 offset_right = 640.0
 offset_bottom = 483.0
 stretch = true
@@ -24,7 +24,10 @@ ui = NodePath("SubViewport/ui")
 canvas = NodePath("SubViewport/canvas")
 
 [node name="SubViewport" type="SubViewport" parent="."]
+unique_name_in_owner = true
+handle_input_locally = false
 size = Vector2i(640, 483)
+render_target_update_mode = 4
 
 [node name="grid" type="Node2D" parent="SubViewport"]
 unique_name_in_owner = true

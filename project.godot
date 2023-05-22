@@ -57,6 +57,7 @@ sketchpad_debug={
 
 [physics]
 
+common/physics_ticks_per_second=10
 common/enable_object_picking=false
 
 [rendering]

@@ -8,13 +8,13 @@ public partial class entry : SubViewportContainer
     [Export]
     Canvas canvas;
     public SketchPad pad;
-    public Rid vp_id;
+    Rid vp_canvas_id;
+    SubViewport vp_canvas;
     public override void _Ready()
     {
         Input.UseAccumulatedInput = false;
         Engine.MaxFps = 30;
-        vp_id = GetViewport().GetViewportRid();
-        RenderingServer.ViewportSetClearMode(vp_id, RenderingServer.ViewportClearMode.OnlyNextFrame);
+        RenderingServer.ViewportSetClearMode(GetViewport().GetViewportRid(), RenderingServer.ViewportClearMode.OnlyNextFrame);
         RenderingServer.SetDefaultClearColor(Color.Color8(240, 240, 245));
 
         pad = new SketchPad();
@@ -24,12 +24,16 @@ public partial class entry : SubViewportContainer
         pad.ui = ui;
         GetViewport().SizeChanged += viewportChange;
         GetWindow().MinSize = new Vector2I(640, 480);
-        GetTree().Paused = true;
+
+        
+
+        vp_canvas = GetNode<SubViewport>("%SubViewport");
+        vp_canvas_id = vp_canvas.GetViewportRid();
 
         viewportChange();
 
-        var vp = GetNode<SubViewport>("%SubViewport");
-        RenderingServer.ViewportSetRenderDirectToScreen(vp.GetViewportRid(), true);
+        GetWindow().FocusEntered+=windowActive;
+        GetWindow().FocusExited+=windowIdle;
 
     }
 
@@ -85,7 +89,7 @@ public partial class entry : SubViewportContainer
                 {
                     case Key.Kp4:
                         pad.setGrid(GridType.Square);
-                        RenderingServer.ViewportSetClearMode(vp_id, RenderingServer.ViewportClearMode.OnlyNextFrame);
+                        viewportRedraw();
                         break;
 
                     default:
@@ -99,43 +103,45 @@ public partial class entry : SubViewportContainer
         if (@event.IsActionPressed("sketchpad_clear"))
         {
             pad.clear();
-            RenderingServer.ViewportSetClearMode(vp_id, RenderingServer.ViewportClearMode.OnlyNextFrame);
+            viewportRedraw();
         }
         else if (@event.IsActionPressed("sketchpad_grid_hexgon"))
         {
             pad.setGrid(GridType.Hexgon);
-            RenderingServer.ViewportSetClearMode(vp_id, RenderingServer.ViewportClearMode.OnlyNextFrame);
+            viewportRedraw();
         }
         else if (@event.IsActionPressed("sketchpad_next"))
         {
             pad.nextPage();
-            RenderingServer.ViewportSetClearMode(vp_id, RenderingServer.ViewportClearMode.OnlyNextFrame);
+            viewportRedraw();
         }
         else if (@event.IsActionPressed("sketchpad_prev"))
         {
             pad.prevPage();
-            RenderingServer.ViewportSetClearMode(vp_id, RenderingServer.ViewportClearMode.OnlyNextFrame);
+            viewportRedraw();
         }
         else if (@event.IsActionPressed("sketchpad_erase"))
         {
             pad.toggleEraseMode();
-            RenderingServer.ViewportSetClearMode(vp_id, RenderingServer.ViewportClearMode.OnlyNextFrame);
+            viewportRedraw();
         }
         else if (@event.IsActionPressed("sketchpad_debug"))
         {
             pad.toggleDebugPanel();
-            RenderingServer.ViewportSetClearMode(vp_id, RenderingServer.ViewportClearMode.OnlyNextFrame);
+            viewportRedraw();
         }
         else if (@event is InputEventMouseMotion eventMouseMotion)
         {
             if (eventMouseMotion.ButtonMask == MouseButtonMask.Left)
             {
                 pad.appendStroke(eventMouseMotion.Position, eventMouseMotion.Pressure);
+                viewportRedraw();
             }
             else if (eventMouseMotion.ButtonMask == MouseButtonMask.Middle)
             {
                 pad.updateDrag(eventMouseMotion.Position);
                 pad.setGrid(GridType.Refresh);
+                viewportRedraw();
             }
         }
     }
@@ -143,8 +149,23 @@ public partial class entry : SubViewportContainer
     {
         pad.viewportChange(GetViewportRect());
         Size = GetViewportRect().Size;
+        viewportRedraw();
     }
-
+    void viewportRedraw()
+    {
+        RenderingServer.ViewportSetClearMode(vp_canvas_id, RenderingServer.ViewportClearMode.OnlyNextFrame);
+        RenderingServer.ViewportSetUpdateMode(vp_canvas_id, RenderingServer.ViewportUpdateMode.Once);
+    }
+    void windowIdle()
+    {
+        RenderingServer.ViewportSetUpdateMode(GetViewport().GetViewportRid(), RenderingServer.ViewportUpdateMode.Disabled);
+        GetTree().Paused=true;
+    }
+    void windowActive()
+    {
+        RenderingServer.ViewportSetUpdateMode(GetViewport().GetViewportRid(), RenderingServer.ViewportUpdateMode.WhenVisible);
+        GetTree().Paused=false;
+    }
     void debug_generate_stroke()
     {
 
