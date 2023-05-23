@@ -25,7 +25,7 @@ public partial class entry : SubViewportContainer
         GetViewport().SizeChanged += viewportChange;
         GetWindow().MinSize = new Vector2I(640, 480);
 
-        
+
 
         vp_canvas = GetNode<SubViewport>("%SubViewport");
         vp_canvas_id = vp_canvas.GetViewportRid();
@@ -45,7 +45,7 @@ public partial class entry : SubViewportContainer
     // Called every frame. 'delta' is the elapsed time since the previous frame.
     public override void _Process(double delta)
     {
-        
+
     }
     public override void _UnhandledInput(InputEvent @event)
     {
@@ -160,15 +160,14 @@ public partial class entry : SubViewportContainer
     }
     void debug_generate_stroke()
     {
-
         pad.beginStroke(Vector2.Zero);
-        RandomNumberGenerator rd = new RandomNumberGenerator();
         Vector2 ssize = GetViewportRect().Size;
+        int currentCount=pad.currentLayer.store.elemCount;
 
         for (int i = 0; i < 10000; i++)
         {
-            pad.appendStroke(new Vector2(ssize.X * rd.Randf(), ssize.Y * rd.Randf()), rd.Randf());
-            if (pad.currentLayer.store.elemCount > 10000)
+            pad.appendStroke(new Vector2(ssize.X * GD.Randf(), ssize.Y * GD.Randf()), GD.Randf());
+            if (pad.currentLayer.store.elemCount-currentCount > 10000)
             {
                 break;
             }
@@ -179,12 +178,12 @@ public partial class entry : SubViewportContainer
     void debug_stroke_interp()
     {
         //interp test
-        // pad.currentLayer.store.addStroke(new StrokePoint(new Vector2(200, 200), 5));
-        // pad.currentLayer.store.addStroke(new StrokePoint(new Vector2(400, 400), 5));
-        // pad.currentLayer.store.addStroke(new StrokePoint(new Vector2(600, 400), 5));
-        pad.currentLayer.store.addStroke(new StrokePoint(new Vector2(600, 200), 5));
-        pad.currentLayer.store.addStroke(new StrokePoint(new Vector2(600, 212), 5));
-        pad.currentLayer.store.addStroke(new StrokePoint(new Vector2(600, 250), 5));
+        pad.currentLayer.store.endStroke(new StrokePoint(new Vector2(600, 250), 5));
+
+        pad.currentLayer.store.addStroke(new StrokePoint(new Vector2(100, 300), 5));
+        pad.currentLayer.store.addStroke(new StrokePoint(new Vector2(200, 400), 5));
+        pad.currentLayer.store.addStroke(new StrokePoint(new Vector2(400, 400), 5));
+        pad.currentLayer.store.addStroke(new StrokePoint(new Vector2(500, 300), 5));
 
         // float x = 500;
         // float y = 200;
@@ -208,7 +207,7 @@ public partial class entry : SubViewportContainer
         //     var p = bcurve.getPoint((float)(i / 20.0));
         //     pad.currentLayer.store.addPureStroke(new StrokePoint(p, 5));
         // }
-        pad.currentLayer.store.endStroke(new StrokePoint(Vector2.Zero, 1));
+        pad.currentLayer.store.endStroke(new StrokePoint(new Vector2(600, 250), 5));
         pad.canvas.drawStroke(pad.currentLayer);
 
         viewportRedraw();

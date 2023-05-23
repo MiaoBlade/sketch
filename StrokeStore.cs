@@ -102,7 +102,7 @@ public class StrokeStore
                 float space = Math.Max(distThreshold, p0.hsize);
                 int num_interp = Mathf.CeilToInt((dist_10 - p0.hsize - p1.hsize) / space);
 
-                var c_extend = Math.Min(dist_10 / 4, 10);
+                var c_extend = dist_10 / 4;
                 var c0 = p0.pos + c_extend * Vector2.Right.Rotated(dir0);
                 var c1 = p1.pos - c_extend * Vector2.Right.Rotated(dir1);
                 var curve = new CubicCurve(p0.pos, c0, c1, p1.pos);
