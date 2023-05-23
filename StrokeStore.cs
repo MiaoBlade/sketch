@@ -91,7 +91,13 @@ public class StrokeStore
             }
             // p1 dir
             var dir0 = strokeState.p0_dir;
-            var dir1 = interpolateDir(p1.pos - p0.pos, p2.pos - p1.pos);
+
+            var (dir1, dir1_b, dir1_f) = interpolateDir(p1.pos - p0.pos, p2.pos - p1.pos);
+            var breakCurve = MathF.PI - MathF.Abs(MathF.Abs(dir1_f - dir1_b) - MathF.PI) > MathF.PI * 0.5f;
+            if (breakCurve)
+            {
+                GD.Print("breaking");
+            }
 
             //try interpolate p0 p1
             var dist_10 = p0.pos.DistanceTo(p1.pos);
@@ -104,7 +110,7 @@ public class StrokeStore
 
                 var c_extend = dist_10 / 4;
                 var c0 = p0.pos + c_extend * Vector2.Right.Rotated(dir0);
-                var c1 = p1.pos - c_extend * Vector2.Right.Rotated(dir1);
+                var c1 = p1.pos - c_extend * Vector2.Right.Rotated(breakCurve ? dir1_b : dir1);
                 var curve = new CubicCurve(p0.pos, c0, c1, p1.pos);
                 var curve_pts = new Vector2[num_interp];
                 var curve_hsize = new float[num_interp];
@@ -140,7 +146,7 @@ public class StrokeStore
                 id_p1 = append_p1(p1.pos, p1.hsize, p0.pos, p0.hsize, p2.pos);
             }
 
-            strokeState.p0_dir = dir1;
+            strokeState.p0_dir = breakCurve ? dir1_f : dir1;
             strokeState.p0_id = id_p1;
         }
         else
@@ -291,9 +297,11 @@ public class StrokeStore
 
         }
     }
-    float interpolateDir(Vector2 back, Vector2 front)
+    (float, float, float) interpolateDir(Vector2 back, Vector2 front)
     {
-        return (back.Angle() + front.Angle()) / 2;
+        var a = back.Angle();
+        var b = front.Angle();
+        return ((a + b) / 2, a, b);
     }
     void fix_p0(Vector2 next, float hsize)
     {
