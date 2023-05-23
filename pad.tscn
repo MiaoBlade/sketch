@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://dc1d2edf7xs4t"]
+[gd_scene load_steps=12 format=3 uid="uid://dc1d2edf7xs4t"]
 
 [ext_resource type="Script" path="res://entry.cs" id="1_ln017"]
 [ext_resource type="Script" path="res://Canvas.cs" id="2_jtn6x"]
@@ -6,6 +6,7 @@
 [ext_resource type="Shader" path="res://stroke.gdshader" id="3_r37tk"]
 [ext_resource type="Script" path="res://UI.cs" id="4_041qh"]
 [ext_resource type="Theme" uid="uid://bt2t12k0tyewq" path="res://default_theme.tres" id="4_igdwo"]
+[ext_resource type="Script" path="res://script/ui/DebugPanel.cs" id="7_xmpoy"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_f85w7"]
 shader = ExtResource("3_r37tk")
@@ -89,26 +90,23 @@ label_settings = SubResource("LabelSettings_vgyrx")
 horizontal_alignment = 2
 vertical_alignment = 2
 
-[node name="debugPanel" type="PanelContainer" parent="SubViewport/ui"]
+[node name="debugPanel" type="Container" parent="SubViewport/ui"]
 offset_right = 257.0
 offset_bottom = 297.0
+script = ExtResource("7_xmpoy")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="SubViewport/ui/debugPanel"]
+[node name="Button2" type="Button" parent="SubViewport/ui/debugPanel"]
 layout_mode = 2
-alignment = 1
-
-[node name="Button2" type="Button" parent="SubViewport/ui/debugPanel/VBoxContainer"]
-layout_mode = 2
-size_flags_horizontal = 4
 size_flags_vertical = 4
+mouse_filter = 1
 text = "dist 100 stroke
 "
 
-[node name="Button" type="Button" parent="SubViewport/ui/debugPanel/VBoxContainer"]
+[node name="Button" type="Button" parent="SubViewport/ui/debugPanel"]
 layout_mode = 2
-size_flags_horizontal = 4
 size_flags_vertical = 4
+mouse_filter = 1
 text = "10000 stroke"
 
-[connection signal="pressed" from="SubViewport/ui/debugPanel/VBoxContainer/Button2" to="." method="debug_stroke_interp"]
-[connection signal="pressed" from="SubViewport/ui/debugPanel/VBoxContainer/Button" to="." method="debug_generate_stroke"]
+[connection signal="pressed" from="SubViewport/ui/debugPanel/Button2" to="." method="debug_stroke_interp"]
+[connection signal="pressed" from="SubViewport/ui/debugPanel/Button" to="." method="debug_generate_stroke"]

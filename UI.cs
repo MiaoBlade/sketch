@@ -7,7 +7,7 @@ public partial class UI : Node2D
     [Export]
     PanelContainer bg;
     [Export]
-    PanelContainer debug;
+    DebugPanel debug;
     [Export]
     Label layerIndicator;
     [Export]
@@ -17,6 +17,8 @@ public partial class UI : Node2D
     {
         updateLayout(GetViewportRect());
         debug.Visible = false;
+        debug.MouseEntered += debugPanelEntered;
+        debug.MouseExited += debugPanelLeave;
     }
     public void updateLayout(Rect2 vp_rect)
     {
@@ -31,5 +33,16 @@ public partial class UI : Node2D
     public void toggleDebugPanel()
     {
         debug.Visible = !debug.Visible;
+    }
+    void debugPanelEntered()
+    {
+        RenderingServer.ViewportSetUpdateMode(GetViewport().GetViewportRid(), RenderingServer.ViewportUpdateMode.WhenVisible);
+        RenderingServer.ViewportSetClearMode(GetViewport().GetViewportRid(), RenderingServer.ViewportClearMode.Always);
+    }
+    void debugPanelLeave()
+    {
+        RenderingServer.ViewportSetUpdateMode(GetViewport().GetViewportRid(), RenderingServer.ViewportUpdateMode.Once);
+        RenderingServer.ViewportSetClearMode(GetViewport().GetViewportRid(), RenderingServer.ViewportClearMode.OnlyNextFrame);
+        GD.Print("leave");
     }
 }

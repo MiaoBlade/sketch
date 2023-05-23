@@ -174,6 +174,7 @@ public partial class entry : SubViewportContainer
             }
         }
         pad.endStroke(Vector2.Zero);
+        viewportRedraw();
     }
     void debug_stroke_interp()
     {
@@ -209,5 +210,7 @@ public partial class entry : SubViewportContainer
         // }
         pad.currentLayer.store.endStroke(new StrokePoint(Vector2.Zero, 1));
         pad.canvas.drawStroke(pad.currentLayer);
+
+        viewportRedraw();
     }
 }
