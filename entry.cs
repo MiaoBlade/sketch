@@ -169,16 +169,21 @@ public partial class entry : SubViewportContainer
         RenderingServer.ViewportSetUpdateMode(GetViewport().GetViewportRid(), RenderingServer.ViewportUpdateMode.WhenVisible);
         GetTree().Paused = false;
     }
+    public void setDebugEnabled(bool value)
+    {
+        pad.setDebugDisplayEnabled(value);
+        viewportRedraw();
+    }
     void debug_generate_stroke()
     {
         pad.beginStroke(Vector2.Zero);
         Vector2 ssize = GetViewportRect().Size;
-        int currentCount=pad.currentLayer.store.elemCount;
+        int currentCount = pad.currentLayer.store.elemCount;
 
         for (int i = 0; i < 10000; i++)
         {
             pad.appendStroke(new Vector2(ssize.X * GD.Randf(), ssize.Y * GD.Randf()), GD.Randf());
-            if (pad.currentLayer.store.elemCount-currentCount > 10000)
+            if (pad.currentLayer.store.elemCount - currentCount > 10000)
             {
                 break;
             }

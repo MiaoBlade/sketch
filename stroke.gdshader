@@ -1,6 +1,8 @@
 shader_type canvas_item;
 render_mode unshaded;
 
+uniform float useDebug;
+
 varying float idvalue;
 varying vec4 idcolor;
 
@@ -18,6 +20,5 @@ void vertex(){
 void fragment() {
 	//COLOR=vec4(idvalue,0.2,0.2,1.0);
 	COLOR=idcolor;
-	COLOR.a=1.0;
-	//COLOR.a=1.0-idvalue*0.3;
+	COLOR.a=1.0-idvalue*0.3*useDebug;
 }

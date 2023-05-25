@@ -10,6 +10,7 @@
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_f85w7"]
 shader = ExtResource("3_r37tk")
+shader_parameter/useDebug = null
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ncb4f"]
 bg_color = Color(0.607843, 0.607843, 0.607843, 1)
@@ -93,6 +94,7 @@ vertical_alignment = 2
 [node name="debugPanel" type="Container" parent="SubViewport/ui"]
 offset_right = 257.0
 offset_bottom = 297.0
+mouse_filter = 0
 script = ExtResource("7_xmpoy")
 
 [node name="Button2" type="Button" parent="SubViewport/ui/debugPanel"]
@@ -108,5 +110,10 @@ size_flags_vertical = 4
 mouse_filter = 1
 text = "10000 stroke"
 
+[node name="CheckButton" type="CheckButton" parent="SubViewport/ui/debugPanel"]
+layout_mode = 2
+text = "Enable debug mode"
+
 [connection signal="pressed" from="SubViewport/ui/debugPanel/Button2" to="." method="debug_stroke_interp"]
 [connection signal="pressed" from="SubViewport/ui/debugPanel/Button" to="." method="debug_generate_stroke"]
+[connection signal="toggled" from="SubViewport/ui/debugPanel/CheckButton" to="." method="setDebugEnabled"]

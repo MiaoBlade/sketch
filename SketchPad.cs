@@ -233,4 +233,15 @@ public class SketchPad
     {
         return Mathf.Sqrt(p) * baseStrokeSize;
     }
+    public void setDebugDisplayEnabled(bool value)
+    {
+        currentLayer.setting.useDebugColor = value;
+        var matl = (ShaderMaterial)canvas.Material;
+        if (matl != null)
+        {
+            matl.SetShaderParameter("useDebug", value ? 1.0 : 0.0);
+        }
+        grid.drawGrid(currentLayer);
+        canvas.drawStroke(currentLayer);
+    }
 }
