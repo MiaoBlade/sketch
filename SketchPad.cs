@@ -196,6 +196,18 @@ public class SketchPad
         }
 
     }
+    public void zoomOut()
+    {
+        currentLayer.zoomOut(canvas.GetGlobalMousePosition());
+        grid.drawGrid(currentLayer);
+        canvas.drawStroke(currentLayer);
+    }
+    public void zoomIn()
+    {
+        currentLayer.zoomIn(canvas.GetGlobalMousePosition());
+        grid.drawGrid(currentLayer);
+        canvas.drawStroke(currentLayer);
+    }
     public void toggleDebugPanel()
     {
         ui.toggleDebugPanel();

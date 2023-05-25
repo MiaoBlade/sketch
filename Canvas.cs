@@ -35,7 +35,6 @@ public partial class Canvas : Node2D
     {
         if (layer != null)
         {
-            Position = layer.pos;
             if (mmesh.InstanceCount < layer.store.capacity)
             {
                 mmesh.InstanceCount = layer.store.capacity;
@@ -49,6 +48,9 @@ public partial class Canvas : Node2D
     public void drawStroke(SketchLayer sl)
     {
         layer = sl;
+        Position = layer.pos;
+        var realScale = Mathf.Pow(2, layer.scaleLevel);
+        Scale = Vector2.One * realScale;
         QueueRedraw();
     }
     public override void _Process(double delta)

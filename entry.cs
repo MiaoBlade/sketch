@@ -123,6 +123,16 @@ public partial class entry : SubViewportContainer
             pad.toggleDebugPanel();
             viewportRedraw();
         }
+        else if (@event.IsActionPressed("sketchpad_zoomout"))
+        {
+            pad.zoomOut();
+            viewportRedraw();
+        }
+        else if (@event.IsActionPressed("sketchpad_zoomin"))
+        {
+            pad.zoomIn();
+            viewportRedraw();
+        }
         else if (@event is InputEventMouseMotion eventMouseMotion)
         {
             if (eventMouseMotion.ButtonMask == MouseButtonMask.Left)

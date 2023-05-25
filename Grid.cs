@@ -35,13 +35,12 @@ public partial class Grid : Node2D
     }
     void drawSquare()
     {
-        Rect2 vp_rect = GetViewportRect();
-
-        //map layer  coords to viewport coords
-        var d = layer.gdim;
+        Vector2 vp_size = GetViewportRect().Size;
+        var realScale = Mathf.Pow(2, layer.scaleLevel);
+        var d = layer.gdim * realScale;
         var pos = layer.pos;
 
-        var gid_f = (Vector2.Zero - pos) / d;
+        var gid_f = -pos / d;
         var x_g = Mathf.FloorToInt(gid_f.X) * d + pos.X;
         var y_g = Mathf.FloorToInt(gid_f.Y) * d + pos.Y;
 
@@ -50,9 +49,9 @@ public partial class Grid : Node2D
         //draw row
         from.X = 0;
         from.Y = y_g;
-        to.X = vp_rect.Size.X;
+        to.X = vp_size.X;
         to.Y = y_g;
-        while (from.Y < vp_rect.Size.Y)
+        while (from.Y < vp_size.Y)
         {
             DrawLine(from, to, drawColor);
             from.Y += d;
@@ -62,8 +61,8 @@ public partial class Grid : Node2D
         from.X = x_g;
         from.Y = 0;
         to.X = x_g;
-        to.Y = vp_rect.Size.Y;
-        while (from.X < vp_rect.Size.X)
+        to.Y = vp_size.Y;
+        while (from.X < vp_size.X)
         {
             DrawLine(from, to, drawColor);
             from.X += d;
@@ -73,13 +72,13 @@ public partial class Grid : Node2D
     void drawHexgon()
     {
         Rect2 vp_rect = GetViewportRect();
-        //map layer  coords to viewport coords
-        var d = layer.gdim;
-        var dx = layer.gdim * 3;
-        var dy = layer.gdim * Mathf.Sqrt(3);
+        var realScale = Mathf.Pow(2, layer.scaleLevel);
+        var d = layer.gdim * realScale;
+        var dx = layer.gdim * 3 * realScale;
+        var dy = layer.gdim * Mathf.Sqrt(3) * realScale;
         var pos = layer.pos;
 
-        var gid_f = (Vector2.Zero - pos);
+        var gid_f = -pos;
         var x_g = Mathf.FloorToInt(gid_f.X / dx) * dx + pos.X;
         var y_g = Mathf.FloorToInt(gid_f.Y / dy) * dy + pos.Y;
 
