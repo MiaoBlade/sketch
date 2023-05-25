@@ -65,6 +65,8 @@ public class SketchPad
             if (drawMode == DrawMode.Pen)
             {
                 currentLayer.endStroke(vec);
+                canvas.drawStroke(currentLayer);
+                ui.updateStatus(this);
             }
             else
             {

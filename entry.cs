@@ -62,6 +62,7 @@ public partial class entry : SubViewportContainer
                 {
                     GD.Print("draw stoped");
                     pad.endStroke(eventMouseButton.Position);
+                    viewportRedraw();
                 }
                 GetViewport().SetInputAsHandled();
             }

@@ -32,7 +32,6 @@ public class StrokePoint
 public struct StrokeState
 {
     public int strokeCount = 0;
-    public bool lastIsFirst = false;
     public bool useDebugColor = false;
 
     public Color color = Color.Color8(100, 50, 50, 255);
@@ -61,14 +60,13 @@ public class StrokeStore
     float distIgnoreThreshold = 1f;
     public int capacity = 8 * 1024;
     public float[] buffer;
-    public StrokeElement lastStrokeElement;
 
     StrokeState strokeState;
     RowCollider entry = new RowCollider();//linklist root,next point to smallest id
     public StrokeStore()
     {
         buffer = new float[capacity * bufferStride];
-        strokeState.useDebugColor = false;
+        strokeState.useDebugColor = true;
     }
 
     public void addPureStroke(StrokePoint p)
@@ -168,9 +166,9 @@ public class StrokeStore
     public void endStroke(StrokePoint p)
     {
         addStroke(p);
+        fix_stroke_end();
         strokeState.p1 = null;
         strokeState.p0 = null;
-        strokeState.lastIsFirst = false;
         strokeState.strokeCount++;
     }
     float packPosition(float x, float y)
@@ -213,7 +211,6 @@ public class StrokeStore
         RowCollider rs = findOrInsertRowStore(elem.pos);
         rs.addStroke(elem);
         elemCount++;
-        lastStrokeElement = elem;
         return elem.ID;
     }
     void overrideStroke(StrokeElement elem, Transform2D xform, float[] custom = null)
@@ -343,7 +340,7 @@ public class StrokeStore
         insertStroke(p_elem, Transform2D.Identity.RotatedLocal(-angle_p), strokeState.useDebugColor ? COLOR_INTERP : strokeState.color, custom);
     }
 
-    int append_p1(Vector2 p, float hsize, Vector2 prev, float hsize_p, Vector2 next)
+    int append_p1(Vector2 p, float hsize, Vector2 prev, float hsize_p, Vector2 next,bool shrink=false)
     {
         var vec_p = p - prev;
         var vec_n = next - p;
@@ -354,8 +351,10 @@ public class StrokeStore
 
         var mag_p = vec_p.Length() / 2;
 
-        var v0 = new Vector2(hsize, -hsize).Rotated((angle_n - angle_p));
-        var v2 = new Vector2(hsize, hsize).Rotated((angle_n - angle_p));
+        var ext=shrink?1:hsize;
+
+        var v0 = new Vector2(ext, -ext).Rotated((angle_n - angle_p));
+        var v2 = new Vector2(ext, ext).Rotated((angle_n - angle_p));
 
         var custom = new float[4];
         custom[0] = packPosition(v0.X, v0.Y);
@@ -369,6 +368,62 @@ public class StrokeStore
         strokeState.p0_xdir = angle_p;
 
         return insertStroke(p_elem, Transform2D.Identity.RotatedLocal(-angle_p), strokeState.useDebugColor ? COLOR_KEYPOINT : strokeState.color, custom);
+    }
+    //make line end between p0 p1
+    void fix_stroke_end()
+    {
+        var p0 = strokeState.p0;
+        var p1 = strokeState.p1;
+        // p1 dir
+        var dir0 = strokeState.p0_dir;
+        var dir1 = (p1.pos - p0.pos).Angle();
+        var tailSize = p1.hsize / 2;
+        //try interpolate p0 p1
+        var dist_10 = p0.pos.DistanceTo(p1.pos);
+        if (dist_10 > p0.hsize + p1.hsize)
+        {
+            //interpolate
+            float space = Math.Max(distThreshold, p0.hsize);
+            int num_interp = Mathf.CeilToInt((dist_10 - p0.hsize - p1.hsize) / space);
+
+            var c_extend = dist_10 / 4;
+            var c0 = p0.pos + c_extend * Vector2.Right.Rotated(dir0);
+            var c1 = p1.pos - c_extend * Vector2.Right.Rotated(dir1);
+            var curve = new CubicCurve(p0.pos, c0, c1, p1.pos);
+            var curve_pts = new Vector2[num_interp];
+            var curve_hsize = new float[num_interp];
+
+
+            for (int i = 0; i < num_interp; i++)
+            {
+                var t = (i + 1f) / (num_interp + 1);
+                curve_pts[i] = curve.getPoint(t);
+                curve_hsize[i] = p0.hsize + (tailSize - p0.hsize) * t;
+            }
+            //fix p0
+            fix_p0(curve_pts[0], curve_hsize[0]);
+
+            if (curve_pts.Length > 1)
+            {
+                appendInterpElement(curve_pts[0], curve_hsize[0], p0.pos, p0.hsize, curve_pts[1], curve_hsize[1]);
+                for (int i = 1; i < num_interp - 1; i++)
+                {
+                    appendInterpElement(curve_pts[i], curve_hsize[i], curve_pts[i - 1], curve_hsize[i - 1], curve_pts[i + 1], curve_hsize[i + 1]);
+                }
+                appendInterpElement(curve_pts[num_interp - 1], curve_hsize[num_interp - 1], curve_pts[num_interp - 2], curve_hsize[num_interp - 2], p1.pos, tailSize);
+            }
+            else
+            {
+                appendInterpElement(curve_pts[0], curve_hsize[0], p0.pos, p0.hsize, p1.pos, tailSize);
+            }
+            append_p1(p1.pos, tailSize, curve_pts[num_interp - 1], curve_hsize[num_interp - 1], p1.pos * 2 - p1.pos);
+        }
+        else
+        {
+            //line
+            fix_p0(p1.pos, p1.hsize);
+            append_p1(p1.pos, tailSize, p0.pos, p0.hsize, p1.pos * 2 - p1.pos);
+        }
     }
     void hideElement(int id)
     {
