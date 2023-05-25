@@ -2,18 +2,7 @@ using Godot;
 using System;
 public partial class Grid : Node2D
 {
-    Color drawColor = Color.Color8(200, 200, 200);
     SketchLayer layer;
-    // Called when the node enters the scene tree for the first time.
-    public override void _Ready()
-    {
-    }
-
-    // Called every frame. 'delta' is the elapsed time since the previous frame.
-    public override void _Process(double delta)
-    {
-    }
-
     public override void _Draw()
     {
         if (layer != null)
@@ -39,6 +28,7 @@ public partial class Grid : Node2D
         var realScale = Mathf.Pow(2, layer.scaleLevel);
         var d = layer.gdim * realScale;
         var pos = layer.pos;
+        var drawColor = layer.setting.gridColor;
 
         var gid_f = -pos / d;
         var x_g = Mathf.FloorToInt(gid_f.X) * d + pos.X;
@@ -71,6 +61,7 @@ public partial class Grid : Node2D
     }
     void drawHexgon()
     {
+        var drawColor = layer.setting.gridColor;
         Rect2 vp_rect = GetViewportRect();
         var realScale = Mathf.Pow(2, layer.scaleLevel);
         var d = layer.gdim * realScale;

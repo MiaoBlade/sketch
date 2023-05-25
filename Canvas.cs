@@ -4,10 +4,6 @@ using System.Collections.Generic;
 
 public partial class Canvas : Node2D
 {
-    Color drawColor = Color.Color8(255, 50, 0);
-    Color backColor = Color.Color8(255, 255, 255);
-    // Called when the node enters the scene tree for the first time.
-
     QuadMesh qMesh;
     Texture2D tex;
     SketchLayer layer;

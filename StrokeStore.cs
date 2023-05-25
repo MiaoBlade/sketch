@@ -32,8 +32,6 @@ public class StrokePoint
 public struct StrokeState
 {
     public int strokeCount = 0;
-    public bool useDebugColor = false;
-
     public Color color = Color.Color8(100, 50, 50, 255);
     public StrokePoint p0 = null;
     public StrokePoint p1 = null;
@@ -50,8 +48,6 @@ public struct StrokeState
 
 public class StrokeStore
 {
-    static Color COLOR_KEYPOINT = Color.Color8(255, 0, 0, 255);
-    static Color COLOR_INTERP = Color.Color8(0, 0, 0, 255);
     float gridDim = 100;
     int bufferStride = 16;//8 for xform, 4 for color, 4 for custom
     public int elemCount = 0;
@@ -63,15 +59,17 @@ public class StrokeStore
 
     StrokeState strokeState;
     RowCollider entry = new RowCollider();//linklist root,next point to smallest id
-    public StrokeStore()
+
+    SketchLayer layer;
+    public StrokeStore(SketchLayer l)
     {
+        layer = l;
         buffer = new float[capacity * bufferStride];
-        strokeState.useDebugColor = true;
     }
 
     public void addPureStroke(StrokePoint p)
     {
-        insertStroke(new StrokeElement(p.pos, p.hsize, 0), Transform2D.Identity, COLOR_KEYPOINT);
+        insertStroke(new StrokeElement(p.pos, p.hsize, 0), Transform2D.Identity, layer.setting.Debug_COLOR_KEYPOINT);
     }
     public void addStroke(StrokePoint p)
     {
@@ -156,7 +154,7 @@ public class StrokeStore
                 strokeState.p0_xdir = strokeState.p0_dir;
 
                 var p0_elem = new StrokeElement(p1.pos, p1.hsize, strokeState.p0_xdir);
-                strokeState.p0_id = insertStroke(p0_elem, Transform2D.Identity.RotatedLocal(-strokeState.p0_xdir), strokeState.useDebugColor ? COLOR_KEYPOINT : strokeState.color);
+                strokeState.p0_id = insertStroke(p0_elem, Transform2D.Identity.RotatedLocal(-strokeState.p0_xdir), layer.setting.useDebugColor ? layer.setting.Debug_COLOR_KEYPOINT : strokeState.color);
 
             }
         }
@@ -337,10 +335,10 @@ public class StrokeStore
         custom[3] = packPosition(-mag_p, hsize_p_m);
 
         var p_elem = new StrokeElement(p, hsize, angle_p);
-        insertStroke(p_elem, Transform2D.Identity.RotatedLocal(-angle_p), strokeState.useDebugColor ? COLOR_INTERP : strokeState.color, custom);
+        insertStroke(p_elem, Transform2D.Identity.RotatedLocal(-angle_p), layer.setting.useDebugColor ? layer.setting.Debug_COLOR_INTERP : strokeState.color, custom);
     }
 
-    int append_p1(Vector2 p, float hsize, Vector2 prev, float hsize_p, Vector2 next,bool shrink=false)
+    int append_p1(Vector2 p, float hsize, Vector2 prev, float hsize_p, Vector2 next, bool shrink = false)
     {
         var vec_p = p - prev;
         var vec_n = next - p;
@@ -351,7 +349,7 @@ public class StrokeStore
 
         var mag_p = vec_p.Length() / 2;
 
-        var ext=shrink?1:hsize;
+        var ext = shrink ? 1 : hsize;
 
         var v0 = new Vector2(ext, -ext).Rotated((angle_n - angle_p));
         var v2 = new Vector2(ext, ext).Rotated((angle_n - angle_p));
@@ -367,7 +365,7 @@ public class StrokeStore
 
         strokeState.p0_xdir = angle_p;
 
-        return insertStroke(p_elem, Transform2D.Identity.RotatedLocal(-angle_p), strokeState.useDebugColor ? COLOR_KEYPOINT : strokeState.color, custom);
+        return insertStroke(p_elem, Transform2D.Identity.RotatedLocal(-angle_p), layer.setting.useDebugColor ? layer.setting.Debug_COLOR_KEYPOINT : strokeState.color, custom);
     }
     //make line end between p0 p1
     void fix_stroke_end()

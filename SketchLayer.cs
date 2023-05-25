@@ -6,6 +6,7 @@ public class SketchLayer
 {
     Vector2 dragStart;
     Vector2 dragBase;//layer pos when drag start
+    public SketchSetting setting = new SketchSetting();
 
     public Vector2 pos = Vector2.Zero;//layer origin in screen coord
     public int scaleLevel = 0;//log2(scale)
@@ -13,11 +14,12 @@ public class SketchLayer
     public GridType gtype = GridType.None;
     public float gdim = 50f;
 
-    public StrokeStore store = new StrokeStore();
+    public StrokeStore store;
 
     StrokeElement lastErase;
     public SketchLayer()
     {
+        store = new StrokeStore(this);
     }
     public void beginErase(Vector2 vec, float size)
     {
