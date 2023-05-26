@@ -69,7 +69,9 @@ public class StrokeStore
 
     public void addPureStroke(StrokePoint p)
     {
-        insertStroke(new StrokeElement(p.pos, p.hsize, 0), Transform2D.Identity, layer.setting.Debug_COLOR_KEYPOINT);
+        var color = layer.setting.Debug_COLOR_KEYPOINT;
+        color.A = 1.0f;//use alpha as elem type
+        insertStroke(new StrokeElement(p.pos, p.hsize, 0), Transform2D.Identity, color);
     }
     public void addStroke(StrokePoint p)
     {
@@ -154,7 +156,9 @@ public class StrokeStore
                 strokeState.p0_xdir = strokeState.p0_dir;
 
                 var p0_elem = new StrokeElement(p1.pos, p1.hsize, strokeState.p0_xdir);
-                strokeState.p0_id = insertStroke(p0_elem, Transform2D.Identity.RotatedLocal(-strokeState.p0_xdir), layer.setting.useDebugColor ? layer.setting.Debug_COLOR_KEYPOINT : strokeState.color);
+                var color = strokeState.color;
+                color.A = 1.0f;//use alpha as elem type
+                strokeState.p0_id = insertStroke(p0_elem, Transform2D.Identity.RotatedLocal(-strokeState.p0_xdir), color);
 
             }
         }
@@ -335,7 +339,10 @@ public class StrokeStore
         custom[3] = packPosition(-mag_p, hsize_p_m);
 
         var p_elem = new StrokeElement(p, hsize, angle_p);
-        insertStroke(p_elem, Transform2D.Identity.RotatedLocal(-angle_p), layer.setting.useDebugColor ? layer.setting.Debug_COLOR_INTERP : strokeState.color, custom);
+
+        var color = strokeState.color;
+        color.A = 0.0f;//use alpha as elem type
+        insertStroke(p_elem, Transform2D.Identity.RotatedLocal(-angle_p), color, custom);
     }
 
     int append_p1(Vector2 p, float hsize, Vector2 prev, float hsize_p, Vector2 next, bool shrink = false)
@@ -365,7 +372,10 @@ public class StrokeStore
 
         strokeState.p0_xdir = angle_p;
 
-        return insertStroke(p_elem, Transform2D.Identity.RotatedLocal(-angle_p), layer.setting.useDebugColor ? layer.setting.Debug_COLOR_KEYPOINT : strokeState.color, custom);
+        var color = strokeState.color;
+        color.A = 1.0f;//use alpha as elem type
+
+        return insertStroke(p_elem, Transform2D.Identity.RotatedLocal(-angle_p), color, custom);
     }
     //make line end between p0 p1
     void fix_stroke_end()
@@ -414,13 +424,13 @@ public class StrokeStore
             {
                 appendInterpElement(curve_pts[0], curve_hsize[0], p0.pos, p0.hsize, p1.pos, tailSize);
             }
-            append_p1(p1.pos, tailSize, curve_pts[num_interp - 1], curve_hsize[num_interp - 1], p1.pos * 2 - p1.pos);
+            append_p1(p1.pos, tailSize, curve_pts[num_interp - 1], curve_hsize[num_interp - 1], p1.pos * 2 - p0.pos);
         }
         else
         {
             //line
-            fix_p0(p1.pos, p1.hsize);
-            append_p1(p1.pos, tailSize, p0.pos, p0.hsize, p1.pos * 2 - p1.pos);
+            fix_p0(p1.pos, tailSize);
+            append_p1(p1.pos, tailSize, p0.pos, p0.hsize, p1.pos * 2 - p0.pos);
         }
     }
     void hideElement(int id)
