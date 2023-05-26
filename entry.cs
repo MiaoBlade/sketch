@@ -194,13 +194,11 @@ public partial class entry : SubViewportContainer
     void debug_stroke_interp()
     {
         //interp test
-        pad.currentLayer.store.endStroke(new StrokePoint(new Vector2(600, 250), 5));
-
-        pad.currentLayer.store.addStroke(new StrokePoint(new Vector2(100, 300), 5));
-        pad.currentLayer.store.addStroke(new StrokePoint(new Vector2(200, 400), 5));
-        pad.currentLayer.store.addStroke(new StrokePoint(new Vector2(400, 400), 5));
         pad.currentLayer.store.addStroke(new StrokePoint(new Vector2(500, 300), 5));
+        pad.currentLayer.store.addStroke(new StrokePoint(new Vector2(450, 300), 5));
+        pad.currentLayer.store.addStroke(new StrokePoint(new Vector2(400, 250), 5));
 
+        pad.currentLayer.store.endStroke(new StrokePoint(new Vector2(200, 200), 5));
         // float x = 500;
         // float y = 200;
         // float x_step = 5;
@@ -223,7 +221,7 @@ public partial class entry : SubViewportContainer
         //     var p = bcurve.getPoint((float)(i / 20.0));
         //     pad.currentLayer.store.addPureStroke(new StrokePoint(p, 5));
         // }
-        pad.currentLayer.store.endStroke(new StrokePoint(new Vector2(600, 250), 5));
+
         pad.canvas.drawStroke(pad.currentLayer);
 
         viewportRedraw();

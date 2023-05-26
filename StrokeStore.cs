@@ -300,7 +300,12 @@ public class StrokeStore
     {
         var a = back.Angle();
         var b = front.Angle();
-        return ((a + b) / 2, a, b);
+        var m = (a + b) / 2;
+        if (Math.Abs(b - a) > Mathf.Pi)
+        {
+            m += Mathf.Pi;
+        }
+        return (m, a, b);
     }
     void fix_p0(Vector2 next, float hsize)
     {
