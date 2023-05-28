@@ -8,7 +8,6 @@ public class SketchPad
     public SketchLayer currentLayer;
 
     public Canvas canvas;
-    public Grid grid;
     public PadState state = PadState.Idle;
     public DrawMode drawMode = DrawMode.Pen;
     public event SketchPadUpdate update;
@@ -127,21 +126,18 @@ public class SketchPad
     }
     public void setGrid(GridType t)
     {
-        if (t == GridType.Refresh)
-        {
-            grid.drawGrid(currentLayer);
-            return;
-        }
         if (currentLayer.gtype != t)
         {
-            currentLayer.gtype = t;
-            grid.drawGrid(currentLayer);
+            if (t != GridType.Refresh)
+            {
+                currentLayer.gtype = t;
+            }
         }
         else
         {
             currentLayer.gtype = GridType.None;
-            grid.drawGrid(currentLayer);
         }
+        update.Invoke(EventType.Grid);
     }
     public GridType getGrid()
     {
@@ -165,9 +161,6 @@ public class SketchPad
         }
         currentLayerID += 1;
         currentLayer = layers[currentLayerID];
-
-        grid.drawGrid(currentLayer);
-        canvas.drawStroke(currentLayer);
         update.Invoke(EventType.Layer);
     }
     public void prevPage()
@@ -180,8 +173,6 @@ public class SketchPad
         {
             currentLayerID -= 1;
             currentLayer = layers[currentLayerID];
-            grid.drawGrid(currentLayer);
-            canvas.drawStroke(currentLayer);
             update.Invoke(EventType.Layer);
         }
 
@@ -189,14 +180,12 @@ public class SketchPad
     public void zoomOut()
     {
         currentLayer.zoomOut(canvas.GetGlobalMousePosition());
-        grid.drawGrid(currentLayer);
-        canvas.drawStroke(currentLayer);
+        update.Invoke(EventType.Zoom);
     }
     public void zoomIn()
     {
         currentLayer.zoomIn(canvas.GetGlobalMousePosition());
-        grid.drawGrid(currentLayer);
-        canvas.drawStroke(currentLayer);
+        update.Invoke(EventType.Zoom);
     }
     public void toggleEraseMode()
     {
@@ -221,7 +210,6 @@ public class SketchPad
         {
             matl.SetShaderParameter("useDebug", value ? 1.0 : 0.0);
         }
-        grid.drawGrid(currentLayer);
-        canvas.drawStroke(currentLayer);
+        update.Invoke(EventType.Debug);
     }
 }

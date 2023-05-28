@@ -20,7 +20,6 @@ public partial class entry : SubViewportContainer
         pad = new SketchPad();
         canvas.ProcessMode = ProcessModeEnum.Pausable;
         pad.canvas = canvas;
-        pad.grid = grid;
         pad.update += padUpdate;
         ui.colorChange += pad.colorChange;
         GetViewport().SizeChanged += viewportChange;
@@ -48,20 +47,26 @@ public partial class entry : SubViewportContainer
                 ui.updateStatus(pad);
                 break;
             case EventType.Layer:
+                grid.drawGrid(pad.currentLayer);
+                canvas.drawStroke(pad.currentLayer);
                 ui.updateStatus(pad);
                 break;
             case EventType.Stats:
                 ui.updateStatus(pad);
                 break;
+            case EventType.Zoom:
+                grid.drawGrid(pad.currentLayer);
+                canvas.drawStroke(pad.currentLayer);
+                break;
+            case EventType.Grid:
+                grid.drawGrid(pad.currentLayer);
+                break;
+            case EventType.Debug:
+                break;
             default:
                 break;
         }
-    }
-
-    // Called every frame. 'delta' is the elapsed time since the previous frame.
-    public override void _Process(double delta)
-    {
-
+        viewportRedraw();
     }
     public override void _UnhandledInput(InputEvent @event)
     {
@@ -190,7 +195,6 @@ public partial class entry : SubViewportContainer
     public void setDebugEnabled(bool value)
     {
         pad.setDebugDisplayEnabled(value);
-        viewportRedraw();
     }
     void debug_generate_stroke()
     {

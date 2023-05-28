@@ -21,7 +21,10 @@ namespace Sketchpad
     {
         Color,
         Layer,
-        Stats
+        Stats,
+        Zoom,
+        Grid,
+        Debug
     }
     public delegate void SketchPadUpdate(EventType t);
 }
