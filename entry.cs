@@ -3,13 +3,13 @@ using System;
 using Sketchpad;
 public partial class entry : SubViewportContainer
 {
-    [Export]
-    UI ui;
-    [Export]
-    Canvas canvas;
+    [Export] UI ui;
+    [Export] Canvas canvas;
+    [Export] Grid grid;
     public SketchPad pad;
     Rid vp_canvas_id;
     SubViewport vp_canvas;
+
     public override void _Ready()
     {
         Input.UseAccumulatedInput = false;
@@ -20,8 +20,8 @@ public partial class entry : SubViewportContainer
         pad = new SketchPad();
         canvas.ProcessMode = ProcessModeEnum.Pausable;
         pad.canvas = canvas;
-        pad.grid = GetNode<Grid>("%grid");
-        pad.ui = ui;
+        pad.grid = grid;
+        pad.update += padUpdate;
         ui.colorChange += pad.colorChange;
         GetViewport().SizeChanged += viewportChange;
         GetWindow().MinSize = new Vector2I(640, 480);
@@ -38,6 +38,24 @@ public partial class entry : SubViewportContainer
 
         GetWindow().Title = "Sketch pad";
         ui.updateStatus(pad);
+    }
+
+    private void padUpdate(EventType t)
+    {
+        switch (t)
+        {
+            case EventType.Color:
+                ui.updateStatus(pad);
+                break;
+            case EventType.Layer:
+                ui.updateStatus(pad);
+                break;
+            case EventType.Stats:
+                ui.updateStatus(pad);
+                break;
+            default:
+                break;
+        }
     }
 
     // Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -118,7 +136,7 @@ public partial class entry : SubViewportContainer
         }
         else if (@event.IsActionPressed("sketchpad_debug"))
         {
-            pad.toggleDebugPanel();
+            ui.toggleDebugPanel();
             viewportRedraw();
         }
         else if (@event.IsActionPressed("sketchpad_zoomout"))
@@ -148,8 +166,11 @@ public partial class entry : SubViewportContainer
     }
     void viewportChange()
     {
-        pad.viewportChange(GetViewportRect());
-        Size = GetViewportRect().Size;
+        var rect = GetViewportRect();
+        grid.drawGrid(pad.currentLayer);
+        canvas.drawStroke(pad.currentLayer);
+        ui.updateLayout(rect);
+        Size = rect.Size;
         viewportRedraw();
     }
     void viewportRedraw()

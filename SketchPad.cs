@@ -9,10 +9,9 @@ public class SketchPad
 
     public Canvas canvas;
     public Grid grid;
-    public UI ui;
     public PadState state = PadState.Idle;
     public DrawMode drawMode = DrawMode.Pen;
-
+    public event SketchPadUpdate update;
     float baseStrokeSize = 6;
     float defaultPressure = 0.5f;
     float eraseSizeMultiplier = 0.5f;
@@ -57,7 +56,7 @@ public class SketchPad
             {
                 currentLayer.endStroke(vec);
                 canvas.drawStroke(currentLayer);
-                ui.updateStatus(this);
+                update.Invoke(EventType.Stats);
             }
             else
             {
@@ -82,7 +81,7 @@ public class SketchPad
                 currentLayer.appendErase(vec, mapPressureToSize(eraseSizeMultiplier * pressure));
             }
             canvas.drawStroke(currentLayer);
-            ui.updateStatus(this);
+            update.Invoke(EventType.Stats);
         }
         else
         {
@@ -152,7 +151,7 @@ public class SketchPad
     {
         currentLayer.clear();
         canvas.drawStroke(currentLayer);
-        ui.updateStatus(this);
+        update.Invoke(EventType.Stats);
     }
     public void nextPage()
     {
@@ -169,7 +168,7 @@ public class SketchPad
 
         grid.drawGrid(currentLayer);
         canvas.drawStroke(currentLayer);
-        ui.updateStatus(this);
+        update.Invoke(EventType.Layer);
     }
     public void prevPage()
     {
@@ -183,7 +182,7 @@ public class SketchPad
             currentLayer = layers[currentLayerID];
             grid.drawGrid(currentLayer);
             canvas.drawStroke(currentLayer);
-            ui.updateStatus(this);
+            update.Invoke(EventType.Layer);
         }
 
     }
@@ -199,10 +198,6 @@ public class SketchPad
         grid.drawGrid(currentLayer);
         canvas.drawStroke(currentLayer);
     }
-    public void toggleDebugPanel()
-    {
-        ui.toggleDebugPanel();
-    }
     public void toggleEraseMode()
     {
         if (drawMode == DrawMode.Pen)
@@ -213,12 +208,6 @@ public class SketchPad
         {
             drawMode = DrawMode.Pen;
         }
-    }
-    public void viewportChange(Rect2 vp_rect)
-    {
-        grid.drawGrid(currentLayer);
-        canvas.drawStroke(currentLayer);
-        ui.updateLayout(vp_rect);
     }
     float mapPressureToSize(float p)
     {

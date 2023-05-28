@@ -17,4 +17,11 @@ namespace Sketchpad
         Pen,
         Erase
     }
+    public enum EventType
+    {
+        Color,
+        Layer,
+        Stats
+    }
+    public delegate void SketchPadUpdate(EventType t);
 }
