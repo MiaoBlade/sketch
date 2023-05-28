@@ -22,6 +22,7 @@ public partial class entry : SubViewportContainer
         pad.canvas = canvas;
         pad.grid = GetNode<Grid>("%grid");
         pad.ui = ui;
+        ui.colorChange += pad.colorChange;
         GetViewport().SizeChanged += viewportChange;
         GetWindow().MinSize = new Vector2I(640, 480);
 

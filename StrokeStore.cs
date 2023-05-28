@@ -57,7 +57,7 @@ public class StrokeStore
     public int capacity = 8 * 1024;
     public float[] buffer;
 
-    StrokeState strokeState;
+    public StrokeState strokeState;
     RowCollider entry = new RowCollider();//linklist root,next point to smallest id
 
     SketchLayer layer;

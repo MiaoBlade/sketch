@@ -37,6 +37,12 @@ public class SketchPad
         currentLayerID = 0;
         currentLayer = layers[currentLayerID];
     }
+
+    public void colorChange(Color color)
+    {
+        currentLayer.store.strokeState.color = color;
+    }
+
     public void beginStroke(Vector2 vec)
     {
         if (state == PadState.Idle)

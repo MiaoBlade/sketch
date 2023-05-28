@@ -9,17 +9,33 @@ public partial class UI : Node2D
     [Export]
     DebugPanel debug;
     [Export]
+    ColorPicker colorPicker;
+    [Export]
     Label layerIndicator;
     [Export]
     Label strokeIndicator;
     // Called when the node enters the scene tree for the first time.
+
+    public event Godot.ColorPicker.ColorChangedEventHandler colorChange;
     public override void _Ready()
     {
         updateLayout(GetViewportRect());
         debug.Visible = false;
         debug.MouseEntered += debugPanelEntered;
         debug.MouseExited += debugPanelLeave;
+        colorPicker.needRedraw += redrawViewport;
+        colorPicker.colorChange += pickerColorChange;
     }
+    void pickerColorChange(Color c)
+    {
+        colorChange.Invoke(c);
+    }
+    private void redrawViewport()
+    {
+        RenderingServer.ViewportSetUpdateMode(GetViewport().GetViewportRid(), RenderingServer.ViewportUpdateMode.Once);
+        RenderingServer.ViewportSetClearMode(GetViewport().GetViewportRid(), RenderingServer.ViewportClearMode.OnlyNextFrame);
+    }
+
     public void updateLayout(Rect2 vp_rect)
     {
         bg.Position = new Vector2(0, vp_rect.Size.Y - height_statusbar);

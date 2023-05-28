@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://dc1d2edf7xs4t"]
+[gd_scene load_steps=13 format=3 uid="uid://dc1d2edf7xs4t"]
 
 [ext_resource type="Script" path="res://entry.cs" id="1_ln017"]
 [ext_resource type="Script" path="res://Canvas.cs" id="2_jtn6x"]
@@ -6,6 +6,7 @@
 [ext_resource type="Shader" path="res://stroke.gdshader" id="3_r37tk"]
 [ext_resource type="Script" path="res://UI.cs" id="4_041qh"]
 [ext_resource type="Theme" uid="uid://bt2t12k0tyewq" path="res://default_theme.tres" id="4_igdwo"]
+[ext_resource type="Script" path="res://script/ColorPicker.cs" id="7_alq6b"]
 [ext_resource type="Script" path="res://script/ui/DebugPanel.cs" id="7_xmpoy"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_f85w7"]
@@ -25,8 +26,11 @@ font_color = Color(0.384314, 0.384314, 0.384314, 1)
 
 [node name="root" type="SubViewportContainer" node_paths=PackedStringArray("ui", "canvas")]
 process_mode = 1
-offset_right = 640.0
-offset_bottom = 483.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 stretch = true
 script = ExtResource("1_ln017")
 ui = NodePath("SubViewport/ui")
@@ -36,7 +40,7 @@ canvas = NodePath("SubViewport/canvas")
 unique_name_in_owner = true
 handle_input_locally = false
 msaa_2d = 3
-size = Vector2i(640, 483)
+size = Vector2i(1152, 648)
 render_target_update_mode = 4
 
 [node name="canvas" type="Node2D" parent="SubViewport"]
@@ -48,10 +52,11 @@ script = ExtResource("2_jtn6x")
 unique_name_in_owner = true
 script = ExtResource("3_4ujbw")
 
-[node name="ui" type="Node2D" parent="SubViewport" node_paths=PackedStringArray("bg", "debug", "layerIndicator", "strokeIndicator")]
+[node name="ui" type="Node2D" parent="SubViewport" node_paths=PackedStringArray("bg", "debug", "colorPicker", "layerIndicator", "strokeIndicator")]
 script = ExtResource("4_041qh")
 bg = NodePath("statusbar")
 debug = NodePath("debugPanel")
+colorPicker = NodePath("statusbar/VBoxContainer/hflow/HBoxContainer/ColorPicker")
 layerIndicator = NodePath("statusbar/VBoxContainer/hflow/layerIndicator")
 strokeIndicator = NodePath("statusbar/VBoxContainer/hflow/strokeIndicator")
 
@@ -91,7 +96,18 @@ label_settings = SubResource("LabelSettings_vgyrx")
 horizontal_alignment = 2
 vertical_alignment = 2
 
+[node name="HBoxContainer" type="HBoxContainer" parent="SubViewport/ui/statusbar/VBoxContainer/hflow"]
+layout_mode = 2
+
+[node name="ColorPicker" type="Control" parent="SubViewport/ui/statusbar/VBoxContainer/hflow/HBoxContainer" node_paths=PackedStringArray("picker")]
+custom_minimum_size = Vector2(20, 20)
+layout_mode = 2
+script = ExtResource("7_alq6b")
+color = Color(0.858824, 0.564706, 0.803922, 1)
+picker = NodePath("../../../../../ColorPicker")
+
 [node name="debugPanel" type="Container" parent="SubViewport/ui"]
+visible = false
 offset_right = 257.0
 offset_bottom = 297.0
 mouse_filter = 0
@@ -113,6 +129,20 @@ text = "10000 stroke"
 [node name="CheckButton" type="CheckButton" parent="SubViewport/ui/debugPanel"]
 layout_mode = 2
 text = "Enable debug mode"
+
+[node name="ColorPicker" type="ColorPicker" parent="SubViewport/ui"]
+visible = false
+offset_left = 32.0
+offset_top = 16.0
+offset_right = 314.0
+offset_bottom = 280.0
+picker_shape = 2
+can_add_swatches = false
+sampler_visible = false
+color_modes_visible = false
+sliders_visible = false
+hex_visible = false
+presets_visible = false
 
 [connection signal="pressed" from="SubViewport/ui/debugPanel/Button2" to="." method="debug_stroke_interp"]
 [connection signal="pressed" from="SubViewport/ui/debugPanel/Button" to="." method="debug_generate_stroke"]
