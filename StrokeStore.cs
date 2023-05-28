@@ -65,6 +65,7 @@ public class StrokeStore
     {
         layer = l;
         buffer = new float[capacity * bufferStride];
+        strokeState = new StrokeState();
     }
 
     public void addPureStroke(StrokePoint p)
