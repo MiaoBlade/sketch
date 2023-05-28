@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using Sketchpad;
 public partial class Grid : Node2D
 {
     SketchLayer layer;

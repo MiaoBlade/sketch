@@ -1,21 +1,6 @@
 using Godot;
 using System.Collections.Generic;
-
-public enum GridType
-{
-    Square, None, Refresh, Hexgon
-}
-public enum PadState
-{
-    Drag,
-    Draw,
-    Idle
-}
-public enum DrawMode
-{
-    Pen,
-    Erase
-}
+using Sketchpad;
 public class SketchPad
 {
     public List<SketchLayer> layers = new List<SketchLayer>();

@@ -6,8 +6,8 @@
 [ext_resource type="Shader" path="res://stroke.gdshader" id="3_r37tk"]
 [ext_resource type="Script" path="res://UI.cs" id="4_041qh"]
 [ext_resource type="Theme" uid="uid://bt2t12k0tyewq" path="res://default_theme.tres" id="4_igdwo"]
-[ext_resource type="Script" path="res://script/ColorPicker.cs" id="7_alq6b"]
 [ext_resource type="Script" path="res://script/ui/DebugPanel.cs" id="7_xmpoy"]
+[ext_resource type="Script" path="res://script/ui/ColorPicker.cs" id="7_ystfq"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_f85w7"]
 shader = ExtResource("3_r37tk")
@@ -102,7 +102,7 @@ layout_mode = 2
 [node name="ColorPicker" type="Control" parent="SubViewport/ui/statusbar/VBoxContainer/hflow/HBoxContainer" node_paths=PackedStringArray("picker")]
 custom_minimum_size = Vector2(20, 20)
 layout_mode = 2
-script = ExtResource("7_alq6b")
+script = ExtResource("7_ystfq")
 color = Color(0.858824, 0.564706, 0.803922, 1)
 picker = NodePath("../../../../../ColorPicker")
 
