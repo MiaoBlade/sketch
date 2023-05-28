@@ -26,8 +26,6 @@ public partial class entry : SubViewportContainer
         GetViewport().SizeChanged += viewportChange;
         GetWindow().MinSize = new Vector2I(640, 480);
 
-
-
         vp_canvas = GetNode<SubViewport>("%SubViewport");
         vp_canvas_id = vp_canvas.GetViewportRid();
 
@@ -40,7 +38,6 @@ public partial class entry : SubViewportContainer
 
         GetWindow().Title = "Sketch pad";
         ui.updateStatus(pad);
-
     }
 
     // Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -157,7 +154,6 @@ public partial class entry : SubViewportContainer
     }
     void viewportRedraw()
     {
-        RenderingServer.ViewportSetClearMode(vp_canvas_id, RenderingServer.ViewportClearMode.OnlyNextFrame);
         RenderingServer.ViewportSetUpdateMode(vp_canvas_id, RenderingServer.ViewportUpdateMode.Once);
     }
     void windowIdle()

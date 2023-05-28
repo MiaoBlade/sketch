@@ -14,7 +14,7 @@ public partial class UI : Node2D
     Label layerIndicator;
     [Export]
     Label strokeIndicator;
-    // Called when the node enters the scene tree for the first time.
+    Rid vp_id = new Rid();
 
     public event Godot.ColorPicker.ColorChangedEventHandler colorChange;
     public override void _Ready()
@@ -25,6 +25,8 @@ public partial class UI : Node2D
         debug.MouseExited += debugPanelLeave;
         colorPicker.needRedraw += redrawViewport;
         colorPicker.colorChange += pickerColorChange;
+
+        vp_id = GetViewport().GetViewportRid();
     }
     void pickerColorChange(Color c)
     {
@@ -32,8 +34,7 @@ public partial class UI : Node2D
     }
     private void redrawViewport()
     {
-        RenderingServer.ViewportSetUpdateMode(GetViewport().GetViewportRid(), RenderingServer.ViewportUpdateMode.Once);
-        RenderingServer.ViewportSetClearMode(GetViewport().GetViewportRid(), RenderingServer.ViewportClearMode.OnlyNextFrame);
+        RenderingServer.ViewportSetUpdateMode(vp_id, RenderingServer.ViewportUpdateMode.Once);
     }
 
     public void updateLayout(Rect2 vp_rect)
@@ -45,7 +46,7 @@ public partial class UI : Node2D
     {
         layerIndicator.Text = $"{pad.currentLayerID + 1}/{pad.layers.Count}";
         strokeIndicator.Text = $"{pad.currentLayer.store.elemCount}";
-        colorPicker.Color=pad.currentLayer.store.strokeState.color;
+        colorPicker.Color = pad.currentLayer.store.strokeState.color;
         redrawViewport();
     }
     public void toggleDebugPanel()
@@ -54,13 +55,10 @@ public partial class UI : Node2D
     }
     void debugPanelEntered()
     {
-        RenderingServer.ViewportSetUpdateMode(GetViewport().GetViewportRid(), RenderingServer.ViewportUpdateMode.WhenVisible);
-        RenderingServer.ViewportSetClearMode(GetViewport().GetViewportRid(), RenderingServer.ViewportClearMode.Always);
+        RenderingServer.ViewportSetUpdateMode(vp_id, RenderingServer.ViewportUpdateMode.WhenVisible);
     }
     void debugPanelLeave()
     {
-        RenderingServer.ViewportSetUpdateMode(GetViewport().GetViewportRid(), RenderingServer.ViewportUpdateMode.Once);
-        RenderingServer.ViewportSetClearMode(GetViewport().GetViewportRid(), RenderingServer.ViewportClearMode.OnlyNextFrame);
-        GD.Print("leave");
+        RenderingServer.ViewportSetUpdateMode(vp_id, RenderingServer.ViewportUpdateMode.Once);
     }
 }
