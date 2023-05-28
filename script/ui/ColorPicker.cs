@@ -31,6 +31,10 @@ public partial class ColorPicker : Control
         set
         {
             color = value;
+            if (picker != null)
+            {
+                picker.Color = value;
+            }
             QueueRedraw();
         }
     }
@@ -43,6 +47,14 @@ public partial class ColorPicker : Control
     {
         calcMinSize();
         picker.ColorChanged += pickerColorChange;
+        if (picker != null)
+        {
+            picker.ColorChanged += pickerColorChange;
+        }
+        else
+        {
+            GD.PushWarning("Color Button dont have picker assigned.");
+        }
     }
 
     private void pickerColorChange(Color color)
@@ -55,6 +67,10 @@ public partial class ColorPicker : Control
     {
         if (@event is InputEventMouseButton mbe && mbe.ButtonIndex == MouseButton.Left && mbe.Pressed)
         {
+            if (picker == null)
+            {
+                return;
+            }
             if (picker.Visible)
             {
                 picker.Visible = false;
@@ -66,6 +82,7 @@ public partial class ColorPicker : Control
                 picker.Color = Color;
             }
             needRedraw.Invoke();
+            AcceptEvent();
         }
     }
     public override void _Notification(int what)
