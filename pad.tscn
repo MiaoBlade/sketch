@@ -140,7 +140,6 @@ picker_shape = 2
 can_add_swatches = false
 sampler_visible = false
 color_modes_visible = false
-sliders_visible = false
 hex_visible = false
 presets_visible = false
 
