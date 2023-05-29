@@ -57,7 +57,7 @@ public class StrokeStore
     public int capacity = 8 * 1024;
     public float[] buffer;
 
-    public StrokeState strokeState;
+    StrokeState strokeState;
     RowCollider entry = new RowCollider();//linklist root,next point to smallest id
 
     SketchLayer layer;
@@ -157,7 +157,7 @@ public class StrokeStore
                 strokeState.p0_xdir = strokeState.p0_dir;
 
                 var p0_elem = new StrokeElement(p1.pos, p1.hsize, strokeState.p0_xdir);
-                var color = strokeState.color;
+                var color = layer.setting.color;
                 color.A = 1.0f;//use alpha as elem type
                 strokeState.p0_id = insertStroke(p0_elem, Transform2D.Identity.RotatedLocal(-strokeState.p0_xdir), color);
 
@@ -346,7 +346,7 @@ public class StrokeStore
 
         var p_elem = new StrokeElement(p, hsize, angle_p);
 
-        var color = strokeState.color;
+        var color = layer.setting.color;
         color.A = 0.0f;//use alpha as elem type
         insertStroke(p_elem, Transform2D.Identity.RotatedLocal(-angle_p), color, custom);
     }
@@ -378,7 +378,7 @@ public class StrokeStore
 
         strokeState.p0_xdir = angle_p;
 
-        var color = strokeState.color;
+        var color = layer.setting.color;
         color.A = 1.0f;//use alpha as elem type
 
         return insertStroke(p_elem, Transform2D.Identity.RotatedLocal(-angle_p), color, custom);

@@ -21,7 +21,7 @@ public class SketchPad
 
     public void colorChange(Color color)
     {
-        currentLayer.store.strokeState.color = color;
+        currentLayer.setting.color = color;
     }
 
     public void beginStroke(Vector2 vec)

@@ -48,7 +48,7 @@ public partial class UI : Node2D
     {
         layerIndicator.Text = $"{pad.currentLayerID + 1}/{pad.layers.Count}";
         strokeIndicator.Text = $"{pad.currentLayer.store.elemCount}";
-        colorPicker.Color = pad.currentLayer.store.strokeState.color;
+        colorPicker.Color = pad.currentLayer.setting.color;
         debugToggle.SetPressedNoSignal(pad.currentLayer.setting.useDebugColor);
         redrawViewport();
     }

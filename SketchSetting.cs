@@ -7,6 +7,7 @@ public class SketchSetting
     public Color gridColor = Color.Color8(200, 200, 200);
     public Color Debug_COLOR_KEYPOINT = Color.Color8(255, 0, 0, 255);
     public Color Debug_COLOR_INTERP = Color.Color8(0, 0, 0, 255);
+    public Color color = Color.Color8(100, 50, 50, 255);
     public SketchSetting()
     {
     }
