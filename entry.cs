@@ -6,7 +6,7 @@ public partial class entry : SubViewportContainer
     [Export] UI ui;
     [Export] Canvas canvas;
     [Export] Grid grid;
-    public SketchPad pad;
+    SketchPad pad;
     Rid vp_canvas_id;
     SubViewport vp_canvas;
 
@@ -19,7 +19,6 @@ public partial class entry : SubViewportContainer
 
         pad = new SketchPad();
         canvas.ProcessMode = ProcessModeEnum.Pausable;
-        pad.canvas = canvas;
         pad.update += padUpdate;
         ui.colorChange += pad.colorChange;
         GetViewport().SizeChanged += viewportChange;
@@ -50,6 +49,7 @@ public partial class entry : SubViewportContainer
                 grid.drawGrid(pad.currentLayer);
                 canvas.drawStroke(pad.currentLayer);
                 ui.updateStatus(pad);
+                canvas.setDebugDisplayEnabled(pad.currentLayer.setting.useDebugColor);
                 break;
             case EventType.Stats:
                 ui.updateStatus(pad);
@@ -62,11 +62,21 @@ public partial class entry : SubViewportContainer
                 grid.drawGrid(pad.currentLayer);
                 break;
             case EventType.Debug:
+                canvas.setDebugDisplayEnabled(pad.currentLayer.setting.useDebugColor);
+                break;
+            case EventType.Stroke:
+                canvas.drawStroke(pad.currentLayer);
+                ui.updateStatus(pad);
+                break;
+            case EventType.Drag:
+                canvas.Position = pad.currentLayer.pos;
+                grid.drawGrid(pad.currentLayer);
                 break;
             default:
                 break;
         }
         viewportRedraw();
+        GD.Print($"Pad Event: {t}");
     }
     public override void _UnhandledInput(InputEvent @event)
     {
@@ -146,12 +156,12 @@ public partial class entry : SubViewportContainer
         }
         else if (@event.IsActionPressed("sketchpad_zoomout"))
         {
-            pad.zoomOut();
+            pad.zoomOut(vp_canvas.GetMousePosition());
             viewportRedraw();
         }
         else if (@event.IsActionPressed("sketchpad_zoomin"))
         {
-            pad.zoomIn();
+            pad.zoomIn(vp_canvas.GetMousePosition());
             viewportRedraw();
         }
         else if (@event is InputEventMouseMotion eventMouseMotion)
@@ -244,7 +254,7 @@ public partial class entry : SubViewportContainer
         //     pad.currentLayer.store.addPureStroke(new StrokePoint(p, 5));
         // }
 
-        pad.canvas.drawStroke(pad.currentLayer);
+        canvas.drawStroke(pad.currentLayer);
 
         viewportRedraw();
     }

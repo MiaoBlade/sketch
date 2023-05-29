@@ -24,7 +24,9 @@ namespace Sketchpad
         Stats,
         Zoom,
         Grid,
-        Debug
+        Debug,
+        Stroke,
+        Drag
     }
     public delegate void SketchPadUpdate(EventType t);
 }

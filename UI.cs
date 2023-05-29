@@ -9,6 +9,8 @@ public partial class UI : Node2D
     [Export]
     DebugPanel debug;
     [Export]
+    CheckButton debugToggle;
+    [Export]
     ColorPicker colorPicker;
     [Export]
     Label layerIndicator;
@@ -47,6 +49,7 @@ public partial class UI : Node2D
         layerIndicator.Text = $"{pad.currentLayerID + 1}/{pad.layers.Count}";
         strokeIndicator.Text = $"{pad.currentLayer.store.elemCount}";
         colorPicker.Color = pad.currentLayer.store.strokeState.color;
+        debugToggle.SetPressedNoSignal(pad.currentLayer.setting.useDebugColor);
         redrawViewport();
     }
     public void toggleDebugPanel()

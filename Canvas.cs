@@ -49,7 +49,12 @@ public partial class Canvas : Node2D
         Scale = Vector2.One * realScale;
         QueueRedraw();
     }
-    public override void _Process(double delta)
+    public void setDebugDisplayEnabled(bool value)
     {
+        var matl = (ShaderMaterial)Material;
+        if (matl != null)
+        {
+            matl.SetShaderParameter("useDebug", value ? 1.0 : 0.0);
+        }
     }
 }

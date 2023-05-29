@@ -6,8 +6,6 @@ public class SketchPad
     public List<SketchLayer> layers = new List<SketchLayer>();
     public int currentLayerID = 0;
     public SketchLayer currentLayer;
-
-    public Canvas canvas;
     public PadState state = PadState.Idle;
     public DrawMode drawMode = DrawMode.Pen;
     public event SketchPadUpdate update;
@@ -39,7 +37,7 @@ public class SketchPad
             {
                 currentLayer.beginErase(vec, mapPressureToSize(defaultPressure * eraseSizeMultiplier));
             }
-            canvas.drawStroke(currentLayer);
+            update.Invoke(EventType.Stroke);
         }
         else
         {
@@ -54,8 +52,7 @@ public class SketchPad
             if (drawMode == DrawMode.Pen)
             {
                 currentLayer.endStroke(vec);
-                canvas.drawStroke(currentLayer);
-                update.Invoke(EventType.Stats);
+                update.Invoke(EventType.Stroke);
             }
             else
             {
@@ -79,8 +76,7 @@ public class SketchPad
             {
                 currentLayer.appendErase(vec, mapPressureToSize(eraseSizeMultiplier * pressure));
             }
-            canvas.drawStroke(currentLayer);
-            update.Invoke(EventType.Stats);
+            update.Invoke(EventType.Stroke);
         }
         else
         {
@@ -104,7 +100,7 @@ public class SketchPad
         if (state == PadState.Drag)
         {
             currentLayer.endDrag(vec);
-            canvas.Position = currentLayer.pos;
+            update.Invoke(EventType.Drag);
             state = PadState.Idle;
         }
         else
@@ -117,7 +113,7 @@ public class SketchPad
         if (state == PadState.Drag)
         {
             currentLayer.updateDrag(vec);
-            canvas.Position = currentLayer.pos;
+            update.Invoke(EventType.Drag);
         }
         else
         {
@@ -146,8 +142,7 @@ public class SketchPad
     public void clear()
     {
         currentLayer.clear();
-        canvas.drawStroke(currentLayer);
-        update.Invoke(EventType.Stats);
+        update.Invoke(EventType.Stroke);
     }
     public void nextPage()
     {
@@ -175,16 +170,15 @@ public class SketchPad
             currentLayer = layers[currentLayerID];
             update.Invoke(EventType.Layer);
         }
-
     }
-    public void zoomOut()
+    public void zoomOut(Vector2 zoomCenter)
     {
-        currentLayer.zoomOut(canvas.GetGlobalMousePosition());
+        currentLayer.zoomOut(zoomCenter);
         update.Invoke(EventType.Zoom);
     }
-    public void zoomIn()
+    public void zoomIn(Vector2 zoomCenter)
     {
-        currentLayer.zoomIn(canvas.GetGlobalMousePosition());
+        currentLayer.zoomIn(zoomCenter);
         update.Invoke(EventType.Zoom);
     }
     public void toggleEraseMode()
@@ -205,11 +199,6 @@ public class SketchPad
     public void setDebugDisplayEnabled(bool value)
     {
         currentLayer.setting.useDebugColor = value;
-        var matl = (ShaderMaterial)canvas.Material;
-        if (matl != null)
-        {
-            matl.SetShaderParameter("useDebug", value ? 1.0 : 0.0);
-        }
         update.Invoke(EventType.Debug);
     }
 }

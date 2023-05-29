@@ -53,10 +53,11 @@ script = ExtResource("2_jtn6x")
 unique_name_in_owner = true
 script = ExtResource("3_4ujbw")
 
-[node name="ui" type="Node2D" parent="SubViewport" node_paths=PackedStringArray("bg", "debug", "colorPicker", "layerIndicator", "strokeIndicator")]
+[node name="ui" type="Node2D" parent="SubViewport" node_paths=PackedStringArray("bg", "debug", "debugToggle", "colorPicker", "layerIndicator", "strokeIndicator")]
 script = ExtResource("4_041qh")
 bg = NodePath("statusbar")
 debug = NodePath("debugPanel")
+debugToggle = NodePath("debugPanel/CheckButton")
 colorPicker = NodePath("statusbar/VBoxContainer/hflow/HBoxContainer/ColorPicker")
 layerIndicator = NodePath("statusbar/VBoxContainer/hflow/layerIndicator")
 strokeIndicator = NodePath("statusbar/VBoxContainer/hflow/strokeIndicator")
@@ -133,10 +134,10 @@ text = "Enable debug mode"
 
 [node name="ColorPicker" type="ColorPicker" parent="SubViewport/ui"]
 visible = false
-offset_left = 32.0
-offset_top = 16.0
-offset_right = 314.0
-offset_bottom = 280.0
+offset_left = 48.0
+offset_top = 24.0
+offset_right = 322.0
+offset_bottom = 288.0
 picker_shape = 2
 can_add_swatches = false
 sampler_visible = false

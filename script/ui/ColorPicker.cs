@@ -46,7 +46,6 @@ public partial class ColorPicker : Control
     public override void _Ready()
     {
         calcMinSize();
-        picker.ColorChanged += pickerColorChange;
         if (picker != null)
         {
             picker.ColorChanged += pickerColorChange;
