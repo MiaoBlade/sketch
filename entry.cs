@@ -185,7 +185,6 @@ public partial class entry : SubViewportContainer
         grid.drawGrid(pad.currentLayer);
         canvas.drawStroke(pad.currentLayer);
         ui.updateLayout(rect);
-        Size = rect.Size;
         viewportRedraw();
     }
     void viewportRedraw()
