@@ -6,9 +6,12 @@ public partial class entry : SubViewportContainer
     [Export] UI ui;
     [Export] Canvas canvas;
     [Export] Grid grid;
+    [Export] AudioStreamPlayer uiSound;
     SketchPad pad;
     Rid vp_canvas_id;
     SubViewport vp_canvas;
+
+    AudioStream snd_layerChange;
 
     public override void _Ready()
     {
@@ -36,6 +39,8 @@ public partial class entry : SubViewportContainer
 
         GetWindow().Title = "Sketch pad";
         ui.updateStatus(pad);
+
+        snd_layerChange=ResourceLoader.Load<AudioStream>("res://audio/p.mp3");
     }
 
     private void padUpdate(EventType t)
@@ -50,6 +55,8 @@ public partial class entry : SubViewportContainer
                 canvas.drawStroke(pad.currentLayer);
                 ui.updateStatus(pad);
                 canvas.setDebugDisplayEnabled(pad.currentLayer.setting.useDebugColor);
+                uiSound.Stream=snd_layerChange;
+                uiSound.Play();
                 break;
             case EventType.Stats:
                 ui.updateStatus(pad);

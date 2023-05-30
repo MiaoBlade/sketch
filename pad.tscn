@@ -24,7 +24,7 @@ font_color = Color(0.152941, 0.152941, 0.152941, 1)
 font_size = 12
 font_color = Color(0.384314, 0.384314, 0.384314, 1)
 
-[node name="root" type="SubViewportContainer" node_paths=PackedStringArray("ui", "canvas", "grid")]
+[node name="root" type="SubViewportContainer" node_paths=PackedStringArray("ui", "canvas", "grid", "uiSound")]
 process_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -36,6 +36,7 @@ script = ExtResource("1_ln017")
 ui = NodePath("SubViewport/ui")
 canvas = NodePath("SubViewport/canvas")
 grid = NodePath("SubViewport/grid")
+uiSound = NodePath("SubViewport/ui/uiSound")
 
 [node name="SubViewport" type="SubViewport" parent="."]
 unique_name_in_owner = true
@@ -134,16 +135,19 @@ text = "Enable debug mode"
 
 [node name="ColorPicker" type="ColorPicker" parent="SubViewport/ui"]
 visible = false
-offset_left = 48.0
-offset_top = 24.0
-offset_right = 322.0
-offset_bottom = 288.0
+offset_left = 80.0
+offset_top = 40.0
+offset_right = 338.0
+offset_bottom = 304.0
 picker_shape = 2
 can_add_swatches = false
 sampler_visible = false
 color_modes_visible = false
 hex_visible = false
 presets_visible = false
+
+[node name="uiSound" type="AudioStreamPlayer" parent="SubViewport/ui"]
+volume_db = -2.447
 
 [connection signal="pressed" from="SubViewport/ui/debugPanel/Button2" to="." method="debug_stroke_interp"]
 [connection signal="pressed" from="SubViewport/ui/debugPanel/Button" to="." method="debug_generate_stroke"]
