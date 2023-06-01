@@ -1,7 +1,7 @@
 using Godot;
 using System;
 using Sketchpad;
-public partial class entry : SubViewportContainer
+public partial class entry : Node2D
 {
     [Export] UI ui;
     [Export] Canvas canvas;
@@ -30,7 +30,7 @@ public partial class entry : SubViewportContainer
 
         viewportChange();
 
-        MouseDefaultCursorShape = pad.drawMode == DrawMode.Pen ? CursorShape.Cross : CursorShape.Arrow;
+        Input.SetDefaultCursorShape(pad.drawMode == DrawMode.Pen ? Input.CursorShape.Cross : Input.CursorShape.Arrow);
 
         GetWindow().Title = "Sketch pad";
         ui.updateStatus(pad);
@@ -42,13 +42,13 @@ public partial class entry : SubViewportContainer
 
     private void winFocusLost()
     {
-        GetTree().Paused=true;
+        GetTree().Paused = true;
     }
 
     private void winFocusEnter()
     {
-         GetTree().Paused=false;
-         viewportRedraw();
+        GetTree().Paused = false;
+        viewportRedraw();
     }
 
     public override void _Process(double delta)
@@ -126,14 +126,15 @@ public partial class entry : SubViewportContainer
                 {
                     GD.Print("drag started");
                     pad.beginDrag(eventMouseButton.Position);
-                    MouseDefaultCursorShape = CursorShape.PointingHand;
+                    Input.SetDefaultCursorShape(Input.CursorShape.PointingHand);
+
                 }
                 else
                 {
                     GD.Print("drag stoped");
                     pad.endDrag(eventMouseButton.Position);
                     pad.setGrid(GridType.Refresh);
-                    MouseDefaultCursorShape = pad.drawMode == DrawMode.Pen ? CursorShape.Cross : CursorShape.Arrow;
+                    Input.SetDefaultCursorShape(pad.drawMode == DrawMode.Pen ? Input.CursorShape.Cross : Input.CursorShape.Arrow);
                 }
                 GetViewport().SetInputAsHandled();
             }
@@ -165,7 +166,7 @@ public partial class entry : SubViewportContainer
         {
             pad.toggleEraseMode();
             viewportRedraw();
-            MouseDefaultCursorShape = pad.drawMode == DrawMode.Pen ? CursorShape.Cross : CursorShape.Arrow;
+            Input.SetDefaultCursorShape(pad.drawMode == DrawMode.Pen ? Input.CursorShape.Cross : Input.CursorShape.Arrow);
         }
         else if (@event.IsActionPressed("sketchpad_debug"))
         {
