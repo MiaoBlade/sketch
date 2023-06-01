@@ -8,39 +8,56 @@ public partial class entry : SubViewportContainer
     [Export] Grid grid;
     [Export] AudioStreamPlayer uiSound;
     SketchPad pad;
-    Rid vp_canvas_id;
     SubViewport vp_canvas;
-
     AudioStream snd_layerChange;
-
+    bool needRefresh = false;
     public override void _Ready()
     {
         Input.UseAccumulatedInput = false;
         Engine.MaxFps = 30;
-        RenderingServer.ViewportSetClearMode(GetViewport().GetViewportRid(), RenderingServer.ViewportClearMode.OnlyNextFrame);
         RenderingServer.SetDefaultClearColor(Color.Color8(240, 240, 245));
 
         pad = new SketchPad();
-        canvas.ProcessMode = ProcessModeEnum.Pausable;
         pad.update += padUpdate;
         ui.colorChange += pad.colorChange;
+        ui.needRedraw += viewportRedraw;
         GetViewport().SizeChanged += viewportChange;
         GetWindow().MinSize = new Vector2I(640, 480);
+        GetWindow().FocusEntered += winFocusEnter;
+        GetWindow().FocusExited += winFocusLost;
 
         vp_canvas = GetNode<SubViewport>("%SubViewport");
-        vp_canvas_id = vp_canvas.GetViewportRid();
 
         viewportChange();
-
-        GetWindow().FocusEntered += windowActive;
-        GetWindow().FocusExited += windowIdle;
 
         MouseDefaultCursorShape = pad.drawMode == DrawMode.Pen ? CursorShape.Cross : CursorShape.Arrow;
 
         GetWindow().Title = "Sketch pad";
         ui.updateStatus(pad);
 
-        snd_layerChange=ResourceLoader.Load<AudioStream>("res://audio/p.mp3");
+        snd_layerChange = ResourceLoader.Load<AudioStream>("res://audio/p.mp3");
+        //Stop rendering for manually drawing
+        RenderingServer.RenderLoopEnabled = false;
+    }
+
+    private void winFocusLost()
+    {
+        GetTree().Paused=true;
+    }
+
+    private void winFocusEnter()
+    {
+         GetTree().Paused=false;
+         viewportRedraw();
+    }
+
+    public override void _Process(double delta)
+    {
+        if (needRefresh)
+        {
+            RenderingServer.ForceDraw();
+            needRefresh = false;
+        }
     }
 
     private void padUpdate(EventType t)
@@ -55,7 +72,7 @@ public partial class entry : SubViewportContainer
                 canvas.drawStroke(pad.currentLayer);
                 ui.updateStatus(pad);
                 canvas.setDebugDisplayEnabled(pad.currentLayer.setting.useDebugColor);
-                uiSound.Stream=snd_layerChange;
+                uiSound.Stream = snd_layerChange;
                 uiSound.Play();
                 break;
             case EventType.Stats:
@@ -100,7 +117,6 @@ public partial class entry : SubViewportContainer
                 {
                     GD.Print("draw stoped");
                     pad.endStroke(eventMouseButton.Position);
-                    viewportRedraw();
                 }
                 GetViewport().SetInputAsHandled();
             }
@@ -128,27 +144,22 @@ public partial class entry : SubViewportContainer
         if (@event.IsActionPressed("sketchpad_clear"))
         {
             pad.clear();
-            viewportRedraw();
         }
         else if (@event.IsActionPressed("sketchpad_grid_hexgon"))
         {
             pad.setGrid(GridType.Hexgon);
-            viewportRedraw();
         }
         else if (@event.IsActionPressed("sketchpad_grid_squre"))
         {
             pad.setGrid(GridType.Square);
-            viewportRedraw();
         }
         else if (@event.IsActionPressed("sketchpad_next"))
         {
             pad.nextPage();
-            viewportRedraw();
         }
         else if (@event.IsActionPressed("sketchpad_prev"))
         {
             pad.prevPage();
-            viewportRedraw();
         }
         else if (@event.IsActionPressed("sketchpad_erase"))
         {
@@ -159,30 +170,25 @@ public partial class entry : SubViewportContainer
         else if (@event.IsActionPressed("sketchpad_debug"))
         {
             ui.toggleDebugPanel();
-            viewportRedraw();
         }
         else if (@event.IsActionPressed("sketchpad_zoomout"))
         {
             pad.zoomOut(vp_canvas.GetMousePosition());
-            viewportRedraw();
         }
         else if (@event.IsActionPressed("sketchpad_zoomin"))
         {
             pad.zoomIn(vp_canvas.GetMousePosition());
-            viewportRedraw();
         }
         else if (@event is InputEventMouseMotion eventMouseMotion)
         {
             if (eventMouseMotion.ButtonMask == MouseButtonMask.Left)
             {
                 pad.appendStroke(eventMouseMotion.Position, eventMouseMotion.Pressure);
-                viewportRedraw();
             }
             else if (eventMouseMotion.ButtonMask == MouseButtonMask.Middle)
             {
                 pad.updateDrag(eventMouseMotion.Position);
                 pad.setGrid(GridType.Refresh);
-                viewportRedraw();
             }
         }
     }
@@ -196,17 +202,7 @@ public partial class entry : SubViewportContainer
     }
     void viewportRedraw()
     {
-        RenderingServer.ViewportSetUpdateMode(vp_canvas_id, RenderingServer.ViewportUpdateMode.Once);
-    }
-    void windowIdle()
-    {
-        RenderingServer.ViewportSetUpdateMode(GetViewport().GetViewportRid(), RenderingServer.ViewportUpdateMode.Disabled);
-        GetTree().Paused = true;
-    }
-    void windowActive()
-    {
-        RenderingServer.ViewportSetUpdateMode(GetViewport().GetViewportRid(), RenderingServer.ViewportUpdateMode.WhenVisible);
-        GetTree().Paused = false;
+        needRefresh = true;
     }
     public void setDebugEnabled(bool value)
     {
