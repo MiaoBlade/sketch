@@ -8,7 +8,6 @@ public partial class entry : Node2D
     [Export] Grid grid;
     [Export] AudioStreamPlayer uiSound;
     SketchPad pad;
-    SubViewport vp_canvas;
     AudioStream snd_layerChange;
     bool needRefresh = false;
     public override void _Ready()
@@ -25,8 +24,6 @@ public partial class entry : Node2D
         GetWindow().MinSize = new Vector2I(640, 480);
         GetWindow().FocusEntered += winFocusEnter;
         GetWindow().FocusExited += winFocusLost;
-
-        vp_canvas = GetNode<SubViewport>("%SubViewport");
 
         viewportChange();
 
@@ -174,11 +171,11 @@ public partial class entry : Node2D
         }
         else if (@event.IsActionPressed("sketchpad_zoomout"))
         {
-            pad.zoomOut(vp_canvas.GetMousePosition());
+            pad.zoomOut(GetLocalMousePosition());
         }
         else if (@event.IsActionPressed("sketchpad_zoomin"))
         {
-            pad.zoomIn(vp_canvas.GetMousePosition());
+            pad.zoomIn(GetLocalMousePosition());
         }
         else if (@event is InputEventMouseMotion eventMouseMotion)
         {
