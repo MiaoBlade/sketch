@@ -8,14 +8,22 @@ public partial class DebugPanel : Container
     float childHeight = 50f;
 
     Color bg = Color.Color8(100, 100, 100, 255);
-    // Called when the node enters the scene tree for the first time.
+    public event Action needRedraw;
     public override void _Ready()
     {
+        foreach (Control c in GetChildren())
+        {
+            c.Draw += emitRedraw;
+        }
     }
-
+    void emitRedraw()
+    {
+        needRedraw?.Invoke();
+    }
     public override void _Draw()
     {
         DrawRect(new Rect2(Vector2.Zero, Size), bg);
+        emitRedraw();
     }
     public override void _Notification(int what)
     {
@@ -34,6 +42,11 @@ public partial class DebugPanel : Container
                 FitChildInRect(c, rect);
                 rect.Position = rect.Position + dy;
             }
+            emitRedraw();
+        }
+        else if (what == NotificationVisibilityChanged)
+        {
+            emitRedraw();
         }
     }
 }
