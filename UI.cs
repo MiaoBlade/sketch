@@ -16,19 +16,15 @@ public partial class UI : Node2D
     Label layerIndicator;
     [Export]
     Label strokeIndicator;
-    Rid vp_id = new Rid();
-
     public event Godot.ColorPicker.ColorChangedEventHandler colorChange;
+    public event Action needRedraw;
     public override void _Ready()
     {
         updateLayout(GetViewportRect());
-        debug.Visible = false;
-        debug.MouseEntered += debugPanelEntered;
-        debug.MouseExited += debugPanelLeave;
+        debug.needRedraw += redrawViewport;
         colorPicker.needRedraw += redrawViewport;
         colorPicker.colorChange += pickerColorChange;
-
-        vp_id = GetViewport().GetViewportRid();
+        debug.Visible = false;
     }
     void pickerColorChange(Color c)
     {
@@ -36,9 +32,8 @@ public partial class UI : Node2D
     }
     private void redrawViewport()
     {
-        RenderingServer.ViewportSetUpdateMode(vp_id, RenderingServer.ViewportUpdateMode.Once);
+        needRedraw?.Invoke();
     }
-
     public void updateLayout(Rect2 vp_rect)
     {
         bg.Position = new Vector2(0, vp_rect.Size.Y - height_statusbar);
@@ -55,13 +50,5 @@ public partial class UI : Node2D
     public void toggleDebugPanel()
     {
         debug.Visible = !debug.Visible;
-    }
-    void debugPanelEntered()
-    {
-        RenderingServer.ViewportSetUpdateMode(vp_id, RenderingServer.ViewportUpdateMode.WhenVisible);
-    }
-    void debugPanelLeave()
-    {
-        RenderingServer.ViewportSetUpdateMode(vp_id, RenderingServer.ViewportUpdateMode.Once);
     }
 }
