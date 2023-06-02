@@ -10,6 +10,8 @@ public partial class entry : Node2D
     SketchPad pad;
     AudioStream snd_layerChange;
     bool needRefresh = false;
+    bool needSetCursor = false;
+    Input.CursorShape cursor = Input.CursorShape.Arrow;
     public override void _Ready()
     {
         Input.UseAccumulatedInput = false;
@@ -27,7 +29,7 @@ public partial class entry : Node2D
 
         viewportChange();
 
-        Input.SetDefaultCursorShape(pad.drawMode == DrawMode.Pen ? Input.CursorShape.Cross : Input.CursorShape.Arrow);
+        setCursor(pad.drawMode == DrawMode.Pen ? Input.CursorShape.Cross : Input.CursorShape.Arrow);
 
         GetWindow().Title = "Sketch pad";
         ui.updateStatus(pad);
@@ -54,6 +56,11 @@ public partial class entry : Node2D
         {
             RenderingServer.ForceDraw();
             needRefresh = false;
+        }
+        if (needSetCursor)
+        {
+            Input.SetDefaultCursorShape(cursor);
+            needSetCursor = false;
         }
     }
 
@@ -123,7 +130,7 @@ public partial class entry : Node2D
                 {
                     GD.Print("drag started");
                     pad.beginDrag(eventMouseButton.Position);
-                    Input.SetDefaultCursorShape(Input.CursorShape.PointingHand);
+                    setCursor(Input.CursorShape.PointingHand);
 
                 }
                 else
@@ -131,7 +138,7 @@ public partial class entry : Node2D
                     GD.Print("drag stoped");
                     pad.endDrag(eventMouseButton.Position);
                     pad.setGrid(GridType.Refresh);
-                    Input.SetDefaultCursorShape(pad.drawMode == DrawMode.Pen ? Input.CursorShape.Cross : Input.CursorShape.Arrow);
+                    setCursor(pad.drawMode == DrawMode.Pen ? Input.CursorShape.Cross : Input.CursorShape.Arrow);
                 }
                 GetViewport().SetInputAsHandled();
             }
@@ -163,7 +170,7 @@ public partial class entry : Node2D
         {
             pad.toggleEraseMode();
             viewportRedraw();
-            Input.SetDefaultCursorShape(pad.drawMode == DrawMode.Pen ? Input.CursorShape.Cross : Input.CursorShape.Arrow);
+            setCursor(pad.drawMode == DrawMode.Pen ? Input.CursorShape.Cross : Input.CursorShape.Arrow);
         }
         else if (@event.IsActionPressed("sketchpad_debug"))
         {
@@ -205,6 +212,16 @@ public partial class entry : Node2D
     public void setDebugEnabled(bool value)
     {
         pad.setDebugDisplayEnabled(value);
+    }
+    void setCursor(Input.CursorShape c)
+    {
+        //seems setting cursor  using "Input.SetDefaultCursorShape" while:
+        //1. Input.UseAccumulatedInput == false;
+        //2. Called in _Input function
+        //will not change immediately(simulated mm not working)
+        //So i delay the function to _Process,and it works.
+        needSetCursor = true;
+        cursor = c;
     }
     void debug_generate_stroke()
     {
