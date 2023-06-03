@@ -168,8 +168,8 @@ public class SketchPad
         {
             currentLayerID -= 1;
             currentLayer = layers[currentLayerID];
-            update.Invoke(EventType.Layer);
         }
+        update.Invoke(EventType.Layer);
     }
     public void zoomOut(Vector2 zoomCenter)
     {
