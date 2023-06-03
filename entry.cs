@@ -17,26 +17,34 @@ public partial class entry : Node2D
         Input.UseAccumulatedInput = false;
         Engine.MaxFps = 30;
         RenderingServer.SetDefaultClearColor(Color.Color8(240, 240, 245));
+        //Stop rendering for manually drawing
+        RenderingServer.RenderLoopEnabled = false;
 
         pad = new SketchPad();
         pad.update += padUpdate;
-        ui.colorChange += pad.colorChange;
-        ui.needRedraw += viewportRedraw;
         GetViewport().SizeChanged += viewportChange;
         GetWindow().MinSize = new Vector2I(640, 480);
         GetWindow().FocusEntered += winFocusEnter;
         GetWindow().FocusExited += winFocusLost;
+        GetWindow().CloseRequested += beforeClose;
+        GetWindow().Title = "Sketch pad";
 
-        viewportChange();
+        Session.loadSession(pad);
 
         setCursor(pad.drawMode == DrawMode.Pen ? Input.CursorShape.Cross : Input.CursorShape.Arrow);
 
-        GetWindow().Title = "Sketch pad";
+        ui.colorChange += pad.colorChange;
+        ui.needRedraw += viewportRedraw;
         ui.updateStatus(pad);
 
         snd_layerChange = ResourceLoader.Load<AudioStream>("res://audio/p.mp3");
-        //Stop rendering for manually drawing
-        RenderingServer.RenderLoopEnabled = false;
+
+        viewportChange();
+    }
+
+    private void beforeClose()
+    {
+        Session.saveSession(pad);
     }
 
     private void winFocusLost()
