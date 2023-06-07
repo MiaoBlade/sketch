@@ -141,6 +141,12 @@ public class StrokeStore
             else
             {
                 //line
+                if (dist_21 < p1.hsize + p2.hsize)
+                {
+                    //p0,p1,p2 is very close,we do some stablization here
+                    p1.pos = p0.pos * 0.25f + p2.pos * 0.25f + p1.pos * 0.5f;
+                    strokeState.p1 = p1;
+                }
                 fix_p0(p1.pos, p1.hsize);
                 id_p1 = append_p1(p1.pos, p1.hsize, p0.pos, p0.hsize, p2.pos);
             }
