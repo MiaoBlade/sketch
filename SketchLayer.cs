@@ -23,14 +23,14 @@ public class SketchLayer
     }
     public void beginErase(Vector2 vec, float size)
     {
-        lastErase = new StrokeElement(toLocal(vec), size, 0);
+        lastErase = new StrokeElement(toLocal(vec), size / 2, 0);
     }
     public void endErase()
     {
     }
     public void appendErase(Vector2 vec, float size)
     {
-        StrokeElement newErase = new StrokeElement(toLocal(vec), size, 0);
+        StrokeElement newErase = new StrokeElement(toLocal(vec), size / 2, 0);
         store.eraseCollide(lastErase, newErase);
         lastErase = newErase;
     }

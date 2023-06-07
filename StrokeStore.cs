@@ -5,16 +5,15 @@ using System.Collections.Generic;
 public struct StrokeElement
 {
     public int ID = 0;
-    public StrokeElement(Vector2 p, float s, float d)
+    public StrokeElement(Vector2 p, float hs, float d)
     {
         pos = p;
-        hsize = s / 2;
+        hsize = hs;
         dir = d;
 
     }
     public Vector2 pos = Vector2.Zero;
     public float dir = 0;
-    public float size = 1;
     public float hsize = 0.5f;
 }
 public class StrokePoint
