@@ -12,6 +12,7 @@ public partial class entry : Node2D
     bool needRefresh = false;
     bool needSetCursor = false;
     Input.CursorShape cursor = Input.CursorShape.Arrow;
+    Vector2I wndPos;
     public override void _Ready()
     {
         Input.UseAccumulatedInput = false;
@@ -38,6 +39,7 @@ public partial class entry : Node2D
         ui.updateStatus(pad);
 
         snd_layerChange = ResourceLoader.Load<AudioStream>("res://audio/p.mp3");
+        wndPos = DisplayServer.WindowGetPosition();
 
         viewportChange();
     }
@@ -56,6 +58,15 @@ public partial class entry : Node2D
     {
         GetTree().Paused = false;
         viewportRedraw();
+    }
+    public override void _PhysicsProcess(double delta)
+    {
+        var pos = DisplayServer.WindowGetPosition();
+        if (pos != wndPos)
+        {
+            wndPos = pos;
+            needRefresh = true;
+        }
     }
 
     public override void _Process(double delta)
