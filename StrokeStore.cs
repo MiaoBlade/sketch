@@ -71,7 +71,7 @@ public class StrokeStore
     {
         var color = layer.setting.Debug_COLOR_KEYPOINT;
         color.A = 1.0f;//use alpha as elem type
-        insertStroke(new StrokeElement(p.pos, p.hsize, 0), Transform2D.Identity, color);
+        insertStroke(new StrokeElement(p.pos, p.hsize, 0), Transform2D.Identity, color, makeCustom_default(5));
     }
     public void addStroke(StrokePoint p)
     {
@@ -158,14 +158,22 @@ public class StrokeStore
             if (p1 != null)//this is the second point
             {
                 //init for the first point
-                strokeState.p0_dir = (p.pos - p1.pos).Angle();
+                var dist_21 = p2.pos.DistanceTo(p1.pos);
+                if (dist_21 < distIgnoreThreshold)
+                {
+                    //too close,discard
+                    return;
+                }
+                strokeState.p0_dir = (p2.pos - p1.pos).Angle();
                 strokeState.p0_xdir = strokeState.p0_dir;
-
+                p1.hsize = p2.hsize;//use p2 size
+                strokeState.p1 = p1;
                 var p0_elem = new StrokeElement(p1.pos, p1.hsize, strokeState.p0_xdir);
                 var color = layer.setting.color;
                 color.A = 1.0f;//use alpha as elem type
-                strokeState.p0_id = insertStroke(p0_elem, Transform2D.Identity.RotatedLocal(-strokeState.p0_xdir), color);
-
+                insertStroke(p0_elem, Transform2D.Identity.RotatedLocal(-strokeState.p0_xdir), color, makeCustom_start_0(p1.hsize));
+                color.A = 0.0f;
+                strokeState.p0_id = insertStroke(p0_elem, Transform2D.Identity.RotatedLocal(-strokeState.p0_xdir), color, makeCustom_start_1(p1.hsize, p1.hsize));
             }
         }
         strokeState.p0 = strokeState.p1;
@@ -188,7 +196,7 @@ public class StrokeStore
 
         return BitConverter.UInt32BitsToSingle(bits);
     }
-    int insertStroke(StrokeElement elem, Transform2D xform, Color c, float[] custom = null)
+    int insertStroke(StrokeElement elem, Transform2D xform, Color c, float[] custom)
     {
         if ((elemCount + 1) * bufferStride >= buffer.Length)
         {
@@ -200,21 +208,7 @@ public class StrokeStore
         int pos = elemCount * bufferStride;
         writeXformToBuffer(elemCount, xform);
         writeColorToBuffer(elemCount, c);
-
-        if (custom != null)
-        {
-            writeCustomDataToBuffer(elemCount, custom);
-        }
-        else
-        {
-            float size_half = elem.hsize;
-            buffer[pos + 12] = packPosition(size_half, -size_half);
-            buffer[pos + 13] = packPosition(-size_half, -size_half);
-            buffer[pos + 14] = packPosition(size_half, size_half);
-            buffer[pos + 15] = packPosition(-size_half, size_half);
-        }
-
-
+        writeCustomDataToBuffer(elemCount, custom);
         elem.ID = elemCount;
         RowCollider rs = findOrInsertRowStore(elem.pos);
         rs.addStroke(elem);
@@ -443,6 +437,33 @@ public class StrokeStore
             fix_p0(p1.pos, tailSize);
             append_p1(p1.pos, tailSize, p0.pos, p0.hsize, p1.pos * 2 - p0.pos);
         }
+    }
+    float[] makeCustom_default(float hs)
+    {
+        var custom = new float[4];
+        custom[0] = packPosition(hs, -hs);
+        custom[2] = packPosition(hs, hs);
+        custom[1] = packPosition(-hs, -hs);
+        custom[3] = packPosition(-hs, hs);
+        return custom;
+    }
+    float[] makeCustom_start_0(float hs)
+    {
+        var custom = new float[4];
+        custom[0] = packPosition(0, -hs);
+        custom[2] = packPosition(0, hs);
+        custom[1] = packPosition(-hs * 0.866f, -hs * 0.5f);
+        custom[3] = packPosition(-hs * 0.866f, hs * 0.5f);
+        return custom;
+    }
+    float[] makeCustom_start_1(float hs, float ext)
+    {
+        var custom = new float[4];
+        custom[0] = packPosition(ext, -hs);
+        custom[2] = packPosition(ext, hs);
+        custom[1] = packPosition(0, -hs);
+        custom[3] = packPosition(0, hs);
+        return custom;
     }
     void hideElement(int id)
     {
