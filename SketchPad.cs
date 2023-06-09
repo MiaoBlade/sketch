@@ -10,7 +10,7 @@ public class SketchPad
     public DrawMode drawMode = DrawMode.Pen;
     public event SketchPadUpdate update;
     float baseStrokeSize = 6;
-    float defaultPressure = 0.5f;
+    float defaultPressure = 1.0f;
     float eraseSizeMultiplier = 0.5f;
     public SketchPad()
     {
