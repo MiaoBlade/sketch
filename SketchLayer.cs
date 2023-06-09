@@ -37,7 +37,7 @@ public class SketchLayer
     public void beginStroke(Vector2 vec, float size)
     {
         StrokePoint se = new StrokePoint(toLocal(vec), size / 2);
-        store.addStroke(se);
+        store.beginStroke(se);
     }
     public void endStroke(Vector2 vec)
     {

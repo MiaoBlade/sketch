@@ -39,6 +39,8 @@ public struct StrokeState
     public int p0_id = 0;//smoothed dir
     public float p0_xdir = 0;//xform dir
 
+    public bool hasMotion = false;//mouse anf pen behave diffrently
+
     public StrokeState()
     {
 
@@ -60,6 +62,8 @@ public class StrokeStore
     RowCollider entry = new RowCollider();//linklist root,next point to smallest id
 
     SketchLayer layer;
+
+    float latestSize = 0;
     public StrokeStore(SketchLayer l)
     {
         layer = l;
@@ -73,12 +77,18 @@ public class StrokeStore
         color.A = 1.0f;//use alpha as elem type
         insertStroke(new StrokeElement(p.pos, p.hsize, 0), Transform2D.Identity, color, makeCustom_default(5));
     }
+    public void beginStroke(StrokePoint p)
+    {
+        strokeState.p1 = p;
+    }
     public void addStroke(StrokePoint p)
     {
-        StrokeElement elem = new StrokeElement(p.pos, p.hsize, 0);
         var p0 = strokeState.p0;
         var p1 = strokeState.p1;
         var p2 = p;
+        latestSize = MathF.Max(p.hsize, latestSize);
+        strokeState.hasMotion = true;
+        GD.Print(latestSize);
         if (p0 != null)
         {
             var dist_21 = p2.pos.DistanceTo(p1.pos);
@@ -154,35 +164,41 @@ public class StrokeStore
             strokeState.p0_id = id_p1;
         }
         else
-        {
-            if (p1 != null)//this is the second point
+        {//this is the second point
+            //init for the first point
+            var dist_21 = p2.pos.DistanceTo(p1.pos);
+            if (dist_21 < distIgnoreThreshold)
             {
-                //init for the first point
-                var dist_21 = p2.pos.DistanceTo(p1.pos);
-                if (dist_21 < distIgnoreThreshold)
-                {
-                    //too close,discard
-                    return;
-                }
-                strokeState.p0_dir = (p2.pos - p1.pos).Angle();
-                strokeState.p0_xdir = strokeState.p0_dir;
-                p1.hsize = p2.hsize;//use p2 size
-                strokeState.p1 = p1;
-                var p0_elem = new StrokeElement(p1.pos, p1.hsize, strokeState.p0_xdir);
-                var color = layer.setting.color;
-                color.A = 1.0f;//use alpha as elem type
-                insertStroke(p0_elem, Transform2D.Identity.RotatedLocal(-strokeState.p0_xdir), color, makeCustom_start_0(p1.hsize));
-                color.A = 0.0f;
-                strokeState.p0_id = insertStroke(p0_elem, Transform2D.Identity.RotatedLocal(-strokeState.p0_xdir), color, makeCustom_start_1(p1.hsize, p1.hsize));
+                //too close,discard
+                return;
             }
+            strokeState.p0_dir = (p2.pos - p1.pos).Angle();
+            strokeState.p0_xdir = strokeState.p0_dir;
+            p1.hsize = p2.hsize;//use p2 size
+            strokeState.p1 = p1;
+            var p0_elem = new StrokeElement(p1.pos, p1.hsize, strokeState.p0_xdir);
+            var color = layer.setting.color;
+            color.A = 1.0f;//use alpha as elem type
+            insertStroke(p0_elem, Transform2D.Identity.RotatedLocal(-strokeState.p0_xdir), color, makeCustom_start_0(p1.hsize));
+            color.A = 0.0f;
+            strokeState.p0_id = insertStroke(p0_elem, Transform2D.Identity.RotatedLocal(-strokeState.p0_xdir), color, makeCustom_start_1(p1.hsize, p1.hsize));
         }
         strokeState.p0 = strokeState.p1;
         strokeState.p1 = p;
     }
     public void endStroke(StrokePoint p)
     {
-        addStroke(p);
-        fix_stroke_end();
+        if (strokeState.p0 == null)
+        {
+            drawPointStroke(strokeState.p1.pos, strokeState.hasMotion ? latestSize : strokeState.p1.hsize, p.pos);
+        }
+        else
+        {
+            addStroke(p);
+            fix_stroke_end();
+        }
+        latestSize = 0;
+        strokeState.hasMotion = false;
         strokeState.p1 = null;
         strokeState.p0 = null;
         strokeState.strokeCount++;
@@ -348,6 +364,51 @@ public class StrokeStore
         var color = layer.setting.color;
         color.A = 0.0f;//use alpha as elem type
         insertStroke(p_elem, Transform2D.Identity.RotatedLocal(-angle_p), color, custom);
+    }
+    void drawPointStroke(Vector2 p, float hsize, Vector2 next)
+    {
+        var vec = next - p;
+        var mag = vec.Length();
+        if (mag < distIgnoreThreshold)
+        {
+            var elem = new StrokeElement(p, hsize, 0);
+            var color = layer.setting.color;
+            color.A = 1.0f;//use alpha as elem type
+            insertStroke(elem, Transform2D.Identity, color, makeCustom_start_0(hsize));
+            insertStroke(elem, Transform2D.Identity, color, makeCustom_end(hsize));
+        }
+        else
+        {
+            var angle = vec.Angle();
+            var elem = new StrokeElement(p, hsize, angle);
+            var color = layer.setting.color;
+            color.A = 1.0f;//use alpha as elem type
+            insertStroke(elem, Transform2D.Identity.RotatedLocal(-angle), color, makeCustom_start_0(hsize));
+            elem.pos = next;
+            insertStroke(elem, Transform2D.Identity.RotatedLocal(-angle), color, makeCustom_end(hsize));
+            color.A = 0.0f;
+            insertStroke(elem, Transform2D.Identity.RotatedLocal(-angle), color, makeCustom_interp(hsize, mag / 2));
+        }
+    }
+
+    private float[] makeCustom_interp(float hs, float ext)
+    {
+        var custom = new float[4];
+        custom[0] = packPosition(ext, -hs);
+        custom[2] = packPosition(ext, hs);
+        custom[1] = packPosition(-ext, -hs);
+        custom[3] = packPosition(-ext, hs);
+        return custom;
+    }
+
+    private float[] makeCustom_end(float hs)
+    {
+        var custom = new float[4];
+        custom[0] = packPosition(hs * 0.866f, -hs * 0.5f);
+        custom[2] = packPosition(hs * 0.866f, hs * 0.5f);
+        custom[1] = packPosition(0, -hs);
+        custom[3] = packPosition(0, hs);
+        return custom;
     }
 
     int append_p1(Vector2 p, float hsize, Vector2 prev, float hsize_p, Vector2 next, bool shrink = false)
