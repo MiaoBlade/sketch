@@ -17,6 +17,7 @@ public class SketchLayer
     public StrokeStore store;
 
     StrokeElement lastErase;
+    public List<StrokePoint> points = new List<StrokePoint>();
     public SketchLayer()
     {
         store = new StrokeStore(this);
@@ -38,16 +39,23 @@ public class SketchLayer
     {
         StrokePoint se = new StrokePoint(toLocal(vec), size / 2);
         store.beginStroke(se);
+        points.Add(new StrokePoint(vec, size / 2));
     }
     public void endStroke(Vector2 vec)
     {
         StrokePoint se = new StrokePoint(toLocal(vec), 1);
         store.endStroke(se);
+        points.Add(new StrokePoint(vec, 0));
+
+        GD.Print("Points in latest stroke.(screen)");
+        points.ForEach(p => { GD.Print($"{p.pos} @ {p.hsize}"); });
+        points.Clear();
     }
     public void appendStroke(Vector2 vec, float size)
     {
         StrokePoint se = new StrokePoint(toLocal(vec), size / 2);
         store.addStroke(se);
+        points.Add(new StrokePoint(vec, size / 2));
     }
     public void beginDrag(Vector2 vec)
     {
