@@ -194,7 +194,7 @@ public class SketchPad
     }
     float mapPressureToSize(float p)
     {
-        return Mathf.Sqrt(p) * baseStrokeSize;
+        return p * baseStrokeSize;
     }
     public void setDebugDisplayEnabled(bool value)
     {
