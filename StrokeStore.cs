@@ -2,20 +2,6 @@ using Godot;
 using System;
 using System.Collections.Generic;
 
-public struct StrokeElement
-{
-    public int ID = 0;
-    public StrokeElement(Vector2 p, float hs, float d)
-    {
-        pos = p;
-        hsize = hs;
-        dir = d;
-
-    }
-    public Vector2 pos = Vector2.Zero;
-    public float dir = 0;
-    public float hsize = 0.5f;
-}
 public class StrokePoint
 {
     public Vector2 pos;
@@ -54,17 +40,13 @@ public class StrokeStore
     float gridDim = 100;
     int bufferStride = 16;//8 for xform, 4 for color, 4 for custom
     public int elemCount = 0;
-    public int RowCount = 0;
     float distThreshold = 5.0f;
     float distIgnoreThreshold = 1f;
     public int capacity = 8 * 1024;
     public float[] buffer;
-
     StrokeState strokeState;
-    RowCollider entry = new RowCollider();//linklist root,next point to smallest id
-
+    StrokeCollider collider = new StrokeCollider();
     SketchLayer layer;
-
     float latestSize = 0;
     public StrokeStore(SketchLayer l)
     {
@@ -77,7 +59,7 @@ public class StrokeStore
     {
         var color = layer.setting.Debug_COLOR_KEYPOINT;
         color.A = 1.0f;//use alpha as elem type
-        insertStroke(new StrokeElement(p.pos, p.hsize, 0), Transform2D.Identity, color, makeCustom_default(5));
+        insertStroke(new StrokePatchCollider(p.pos, p.hsize, 0), Transform2D.Identity, color, makeCustom_default(5));
     }
     public void beginStroke(StrokePoint p)
     {
@@ -141,7 +123,7 @@ public class StrokeStore
             strokeState.p0_xdir = strokeState.p0_dir;
             p1.hsize = p2.hsize;//use p2 size
             strokeState.p1 = p1;
-            var elem = new StrokeElement(p1.pos, p1.hsize, strokeState.p0_xdir);
+            var elem = new StrokePatchCollider(p1.pos, p1.hsize, strokeState.p0_xdir);
             var color = layer.setting.color;
             color.A = 1.0f;//use alpha as elem type
             insertStroke(elem, Transform2D.Identity.RotatedLocal(-strokeState.p0_xdir), color, makeCustom_start_0(p1.hsize));
@@ -211,7 +193,7 @@ public class StrokeStore
 
         return BitConverter.UInt32BitsToSingle(bits);
     }
-    int insertStroke(StrokeElement elem, Transform2D xform, Color c, float[] custom)
+    int insertStroke(StrokePatchCollider elem, Transform2D xform, Color c, float[] custom)
     {
         if ((elemCount + 1) * bufferStride >= buffer.Length)
         {
@@ -225,8 +207,7 @@ public class StrokeStore
         writeColorToBuffer(elemCount, c);
         writeCustomDataToBuffer(elemCount, custom);
         elem.ID = elemCount;
-        RowCollider rs = findOrInsertRowStore(elem.pos);
-        rs.addStroke(elem);
+        collider.InsertStrokePatch(elem);
         elemCount++;
         return elem.ID;
     }
@@ -310,35 +291,16 @@ public class StrokeStore
 
     public void clear()
     {
-        RowCollider start = entry.next;
-        while (start != null)
-        {
-            start.clear();
-            start.prev.next = null;
-            start.prev = null;
-            start = start.next;
-
-        }
-        RowCount = 0;
+        collider.Clear();
         elemCount = 0;
     }
-
-    public void eraseCollide(StrokeElement start, StrokeElement end)
+    public void eraseCollide(StrokePatchCollider start, StrokePatchCollider end)
     {
         CollideObject co = new CollideObject(start, end);
-
-        RowCollider rs = entry.next;
-        while (rs != null)
-        {
-            rs.eraseCollide(co);
-            rs = rs.next;
-
-        }
-
+        collider.Collide(co);
         foreach (var cid in co.results)
         {
             hideElement(cid);
-
         }
     }
     (float, float, float) interpolateDir(Vector2 back, Vector2 front)
@@ -394,7 +356,7 @@ public class StrokeStore
         custom[1] = packPosition(-mag_p, -hsize_p_m);
         custom[3] = packPosition(-mag_p, hsize_p_m);
 
-        var p_elem = new StrokeElement(p, hsize, angle_p);
+        var p_elem = new StrokePatchCollider(p, hsize, angle_p);
 
         var color = layer.setting.color;
         color.A = 0.0f;//use alpha as elem type
@@ -406,7 +368,7 @@ public class StrokeStore
         var mag = vec.Length();
         if (mag < distIgnoreThreshold)
         {
-            var elem = new StrokeElement(p, hsize, 0);
+            var elem = new StrokePatchCollider(p, hsize, 0);
             var color = layer.setting.color;
             color.A = 1.0f;//use alpha as elem type
             insertStroke(elem, Transform2D.Identity, color, makeCustom_start_0(hsize));
@@ -415,7 +377,7 @@ public class StrokeStore
         else
         {
             var angle = vec.Angle();
-            var elem = new StrokeElement(p, hsize, angle);
+            var elem = new StrokePatchCollider(p, hsize, angle);
             var color = layer.setting.color;
             color.A = 1.0f;//use alpha as elem type
             insertStroke(elem, Transform2D.Identity.RotatedLocal(-angle), color, makeCustom_start_0(hsize));
@@ -459,7 +421,7 @@ public class StrokeStore
         custom[1] = packPosition(-mag_p, -hsize_p_m);
         custom[3] = packPosition(-mag_p, hsize_p_m);
 
-        var elem = new StrokeElement(p, hsize, angle_p);
+        var elem = new StrokePatchCollider(p, hsize, angle_p);
         var color = layer.setting.color;
         color.A = 1.0f;//use alpha as elem type
         return (insertStroke(elem, Transform2D.Identity.RotatedLocal(-angle_p), color, custom), angle_p);
@@ -468,7 +430,7 @@ public class StrokeStore
     {
         if (s < 0.5) return;
         applyRightPatch(id, s, 0);
-        var elem = new StrokeElement(p, s, r);
+        var elem = new StrokePatchCollider(p, s, r);
         var color = layer.setting.color;
         color.A = 1.0f;
         insertStroke(elem, Transform2D.Identity.RotatedLocal(-r), color, makeCustom_end(s));
@@ -505,63 +467,6 @@ public class StrokeStore
         int pos = id * bufferStride;
         buffer[pos] = 0;
         buffer[pos + 1] = 0;
-    }
-    RowCollider findOrInsertRowStore(Vector2 pos)
-    {
-        int id = Mathf.FloorToInt(pos.Y / gridDim);
-        if (entry.next == null)
-        {
-            //we dont have any rowstore,just add new one
-            entry.next = new RowCollider();
-            entry.next.prev = entry;
-            entry.next.ID = id;
-            RowCount++;
-            return entry.next;
-        }
-        RowCollider rs = entry.next;
-        RowCollider newRS;
-        while (rs != null)
-        {
-            if (rs.ID == id)
-            {
-                // found it
-                return rs;
-            }
-            else if (rs.ID > id)
-            {
-                //insert here
-                newRS = new RowCollider();
-                newRS.ID = id;
-                newRS.prev = rs.prev;
-                newRS.next = rs;
-
-                rs.prev.next = newRS;
-                rs.prev = newRS;
-
-                RowCount++;
-
-                return newRS;
-            }
-            else
-            {
-                //jump next
-                if (rs.next == null)
-                {
-                    break;
-                }
-                else
-                {
-                    rs = rs.next;
-                }
-            }
-        }
-        //we are the biggest,add
-        newRS = new RowCollider();
-        newRS.ID = id;
-        newRS.prev = rs;
-        rs.next = newRS;
-        RowCount++;
-        return newRS;
     }
     Span<float> getCustom(int index)
     {

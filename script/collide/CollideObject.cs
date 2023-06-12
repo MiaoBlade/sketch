@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 
 
-class CollideObject
+public class CollideObject
 {
     public Vector2 start;
     public Vector2 end;
@@ -21,7 +21,7 @@ class CollideObject
 
     public List<int> results = new List<int>();
 
-    public CollideObject(StrokeElement s, StrokeElement e)
+    public CollideObject(StrokePatchCollider s, StrokePatchCollider e)
     {
         start = s.pos;
         end = e.pos;

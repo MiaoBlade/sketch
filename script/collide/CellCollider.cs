@@ -9,8 +9,8 @@ class CellCollider
     public int ID = 0;
     public CellCollider next = null;
     public CellCollider prev = null;
-    public List<StrokeElement> elems = new List<StrokeElement>();
-    public void addStroke(StrokeElement elem)
+    public List<StrokePatchCollider> elems = new List<StrokePatchCollider>();
+    public void addStroke(StrokePatchCollider elem)
     {
         elems.Add(elem);
         elemCount++;
@@ -43,7 +43,7 @@ class CellCollider
         }
         for (int i = 0; i < elems.Count; i++)
         {
-            StrokeElement se = elems[i];
+            StrokePatchCollider se = elems[i];
             if (se.ID == -1)
             {
                 continue;

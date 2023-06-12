@@ -53,7 +53,7 @@ class RowCollider
 
         }
     }
-    public void addStroke(StrokeElement elem)
+    public void addStroke(StrokePatchCollider elem)
     {
         elemCount++;
         CellCollider cs = findOrInsertCellStore(elem.pos);
