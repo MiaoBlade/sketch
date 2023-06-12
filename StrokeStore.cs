@@ -40,6 +40,8 @@ public struct StrokeState
     public float p0_xdir = 0;//xform dir
 
     public bool hasMotion = false;//mouse anf pen behave diffrently
+    public bool strokeStarted = false;
+    public bool strokeStoped = false;
 
     public StrokeState()
     {
@@ -80,128 +82,125 @@ public class StrokeStore
     public void beginStroke(StrokePoint p)
     {
         strokeState.p1 = p;
+        strokeState.strokeStarted = true;
+        strokeState.strokeStoped = false;
     }
     public void addStroke(StrokePoint p)
     {
+        if (!strokeState.strokeStarted) return;
+        if (strokeState.strokeStoped) return;
+        if (p.pos == strokeState.p1.pos) return;
+        var needHandleTail = false;
+        if (p.hsize == 0)//consider 0 size as stroke end 
+        {
+            strokeState.strokeStoped = true;
+            needHandleTail = true;
+        }
         var p0 = strokeState.p0;
         var p1 = strokeState.p1;
         var p2 = p;
         latestSize = MathF.Max(p.hsize, latestSize);
         strokeState.hasMotion = true;
-        GD.Print(latestSize);
+        var dist_21 = p2.pos.DistanceTo(p1.pos);
         if (p0 != null)
         {
-            var dist_21 = p2.pos.DistanceTo(p1.pos);
             if (dist_21 < distIgnoreThreshold)
             {
                 //too close,discard
+                if (needHandleTail)//finish this stroke here
+                {
+                    var (id, angle) = connectStrokePoint(p0, strokeState.p0_dir, strokeState.p0_id, p1, (p1.pos - p0.pos).Angle());
+                    drawStrokeTailPatch(p1.pos, angle, p1.hsize, id);
+                }
                 return;
             }
-            // p1 dir
+            var dist_10 = p1.pos.DistanceTo(p0.pos);
+            if (dist_21 < 3 && dist_10 < 3)
+            {
+                //pa,pb,p2 is very close,we do some stablization here
+                p1.pos = p0.pos * 0.25f + p2.pos * 0.25f + p1.pos * 0.5f;
+                strokeState.p1 = p1;
+            }
             var dir0 = strokeState.p0_dir;
-
             var (dir1, dir1_b, dir1_f) = interpolateDir(p1.pos - p0.pos, p2.pos - p1.pos);
             var breakCurve = MathF.PI - MathF.Abs(MathF.Abs(dir1_f - dir1_b) - MathF.PI) > MathF.PI * 0.5f;
             if (breakCurve)
             {
                 GD.Print("breaking");
             }
-
-            //try interpolate p0 p1
-            var dist_10 = p0.pos.DistanceTo(p1.pos);
-            int id_p1;
-            if (dist_10 > p0.hsize + p1.hsize)
-            {
-                //interpolate
-                float space = Math.Max(distThreshold, p0.hsize);
-                int num_interp = Mathf.CeilToInt((dist_10 - p0.hsize - p1.hsize) / space);
-
-                var c_extend = dist_10 / 4;
-                var c0 = p0.pos + c_extend * Vector2.Right.Rotated(dir0);
-                var c1 = p1.pos - c_extend * Vector2.Right.Rotated(breakCurve ? dir1_b : dir1);
-                var curve = new CubicCurve(p0.pos, c0, c1, p1.pos);
-                var curve_pts = new Vector2[num_interp];
-                var curve_hsize = new float[num_interp];
-
-                for (int i = 0; i < num_interp; i++)
-                {
-                    var t = (i + 1f) / (num_interp + 1);
-                    curve_pts[i] = curve.getPoint(t);
-                    curve_hsize[i] = p0.hsize + (p1.hsize - p0.hsize) * t;
-                }
-                //fix p0
-                fix_p0(curve_pts[0], curve_hsize[0]);
-
-                if (curve_pts.Length > 1)
-                {
-                    appendInterpElement(curve_pts[0], curve_hsize[0], p0.pos, p0.hsize, curve_pts[1], curve_hsize[1]);
-                    for (int i = 1; i < num_interp - 1; i++)
-                    {
-                        appendInterpElement(curve_pts[i], curve_hsize[i], curve_pts[i - 1], curve_hsize[i - 1], curve_pts[i + 1], curve_hsize[i + 1]);
-                    }
-                    appendInterpElement(curve_pts[num_interp - 1], curve_hsize[num_interp - 1], curve_pts[num_interp - 2], curve_hsize[num_interp - 2], p1.pos, p1.hsize);
-                }
-                else
-                {
-                    appendInterpElement(curve_pts[0], curve_hsize[0], p0.pos, p0.hsize, p1.pos, p1.hsize);
-                }
-                id_p1 = append_p1(p1.pos, p1.hsize, curve_pts[num_interp - 1], curve_hsize[num_interp - 1], p2.pos);
-            }
-            else
-            {
-                //line
-                if (dist_21 < p1.hsize + p2.hsize)
-                {
-                    //p0,p1,p2 is very close,we do some stablization here
-                    p1.pos = p0.pos * 0.25f + p2.pos * 0.25f + p1.pos * 0.5f;
-                    strokeState.p1 = p1;
-                }
-                fix_p0(p1.pos, p1.hsize);
-                id_p1 = append_p1(p1.pos, p1.hsize, p0.pos, p0.hsize, p2.pos);
-            }
+            var (pb_id, pb_xangle) = connectStrokePoint(p0, strokeState.p0_dir, strokeState.p0_id, p1, breakCurve ? dir1_b : dir1);
 
             strokeState.p0_dir = breakCurve ? dir1_f : dir1;
-            strokeState.p0_id = id_p1;
+            strokeState.p0_id = pb_id;
+            strokeState.p0_xdir = pb_xangle;
         }
         else
         {//this is the second point
             //init for the first point
-            var dist_21 = p2.pos.DistanceTo(p1.pos);
-            if (dist_21 < distIgnoreThreshold)
-            {
-                //too close,discard
-                return;
-            }
             strokeState.p0_dir = (p2.pos - p1.pos).Angle();
             strokeState.p0_xdir = strokeState.p0_dir;
             p1.hsize = p2.hsize;//use p2 size
             strokeState.p1 = p1;
-            var p0_elem = new StrokeElement(p1.pos, p1.hsize, strokeState.p0_xdir);
+            var elem = new StrokeElement(p1.pos, p1.hsize, strokeState.p0_xdir);
             var color = layer.setting.color;
             color.A = 1.0f;//use alpha as elem type
-            insertStroke(p0_elem, Transform2D.Identity.RotatedLocal(-strokeState.p0_xdir), color, makeCustom_start_0(p1.hsize));
+            insertStroke(elem, Transform2D.Identity.RotatedLocal(-strokeState.p0_xdir), color, makeCustom_start_0(p1.hsize));
             color.A = 0.0f;
-            strokeState.p0_id = insertStroke(p0_elem, Transform2D.Identity.RotatedLocal(-strokeState.p0_xdir), color, makeCustom_start_1(p1.hsize, p1.hsize));
+            strokeState.p0_id = insertStroke(elem, Transform2D.Identity.RotatedLocal(-strokeState.p0_xdir), color, makeCustom_start_1(p1.hsize, p1.hsize));
         }
         strokeState.p0 = strokeState.p1;
         strokeState.p1 = p;
+        if (needHandleTail)
+        {
+            //finish this stroke here
+            connectStrokePoint(p0, strokeState.p0_dir, strokeState.p0_id, p1, (p1.pos - p0.pos).Angle());
+        }
     }
     public void endStroke(StrokePoint p)
     {
-        if (strokeState.p0 == null)
+        if (!strokeState.strokeStarted) return;
+
+        if (!strokeState.strokeStoped)
         {
-            drawPointStroke(strokeState.p1.pos, strokeState.hasMotion ? latestSize : strokeState.p1.hsize, p.pos);
-        }
-        else
-        {
-            addStroke(p);
-            fix_stroke_end();
+            if (strokeState.p0 == null)
+            {
+                drawPointStroke(strokeState.p1.pos, strokeState.hasMotion ? latestSize : strokeState.p1.hsize, p.pos);
+            }
+            else
+            {
+                var p0 = strokeState.p0;
+                var p1 = strokeState.p1;
+                var p2 = p;
+                var dist_21 = p2.pos.DistanceTo(p1.pos);
+                if (dist_21 < distIgnoreThreshold)
+                {
+                    var (pb_id, pb_xangle) = connectStrokePoint(p0, strokeState.p0_dir, strokeState.p0_id, p1, (p1.pos - p0.pos).Angle());
+                    drawStrokeTailPatch(p1.pos, pb_xangle, p1.hsize, pb_id);
+                }
+                else
+                {
+                    var dir0 = strokeState.p0_dir;
+                    var (dir1, dir1_b, dir1_f) = interpolateDir(p1.pos - p0.pos, p2.pos - p1.pos);
+                    var breakCurve = MathF.PI - MathF.Abs(MathF.Abs(dir1_f - dir1_b) - MathF.PI) > MathF.PI * 0.5f;
+                    if (breakCurve)
+                    {
+                        GD.Print("breaking");
+                    }
+                    var (pb_id, pb_xangle) = connectStrokePoint(p0, strokeState.p0_dir, strokeState.p0_id, p1, breakCurve ? dir1_b : dir1);
+                    p2.hsize = Mathf.Max(0.5f, 0.5f + (p1.hsize - 0.5f) * (1 - MathF.Min(1, dist_21 / p1.hsize / 10)));
+                    var (p2_id, p2_xangle) = connectStrokePoint(p1, breakCurve ? dir1_f : dir1, pb_id, p2, (p2.pos - p1.pos).Angle());
+
+                    drawStrokeTailPatch(p2.pos, p2_xangle, p2.hsize, p2_id);
+                }
+            }
         }
         latestSize = 0;
         strokeState.hasMotion = false;
         strokeState.p1 = null;
         strokeState.p0 = null;
         strokeState.strokeCount++;
+        strokeState.strokeStarted = false;
+        strokeState.strokeStoped = true;
     }
     float packPosition(float x, float y)
     {
@@ -231,24 +230,54 @@ public class StrokeStore
         elemCount++;
         return elem.ID;
     }
-    void overrideStroke(StrokeElement elem, Transform2D xform, float[] custom = null)
+    (int pb_id, float pb_xangle) connectStrokePoint(StrokePoint pa, float pa_angle, int pa_id, StrokePoint pb, float pb_angle)
     {
-        xform.Origin = elem.pos;
-        writeXformToBuffer(elem.ID, xform);
-
-        if (custom != null)
+        var dist_10 = pa.pos.DistanceTo(pb.pos);
+        int id_pb;
+        float xangle_pb = 0;
+        if (dist_10 > pa.hsize + pb.hsize)
         {
-            writeCustomDataToBuffer(elem.ID, custom);
+            //interpolate
+            float space = Math.Max(distThreshold, pa.hsize);
+            int num_interp = Mathf.CeilToInt((dist_10 - pa.hsize - pb.hsize) / space);
+
+            var c_extend = dist_10 / 4;
+            var c0 = pa.pos + c_extend * Vector2.Right.Rotated(pa_angle);
+            var c1 = pb.pos - c_extend * Vector2.Right.Rotated(pb_angle);
+            var curve = new CubicCurve(pa.pos, c0, c1, pb.pos);
+            var curve_pts = new Vector2[num_interp];
+            var curve_hsize = new float[num_interp];
+
+            for (int i = 0; i < num_interp; i++)
+            {
+                var t = (i + 1f) / (num_interp + 1);
+                curve_pts[i] = curve.getPoint(t);
+                curve_hsize[i] = pa.hsize + (pb.hsize - pa.hsize) * t;
+            }
+            //fix pa
+            fix_p0(curve_pts[0], curve_hsize[0]);
+
+            if (curve_pts.Length > 1)
+            {
+                appendInterpElement(curve_pts[0], curve_hsize[0], pa.pos, pa.hsize, curve_pts[1], curve_hsize[1]);
+                for (int i = 1; i < num_interp - 1; i++)
+                {
+                    appendInterpElement(curve_pts[i], curve_hsize[i], curve_pts[i - 1], curve_hsize[i - 1], curve_pts[i + 1], curve_hsize[i + 1]);
+                }
+                appendInterpElement(curve_pts[num_interp - 1], curve_hsize[num_interp - 1], curve_pts[num_interp - 2], curve_hsize[num_interp - 2], pb.pos, pb.hsize);
+            }
+            else
+            {
+                appendInterpElement(curve_pts[0], curve_hsize[0], pa.pos, pa.hsize, pb.pos, pb.hsize);
+            }
+            (id_pb, xangle_pb) = append_p1(pb.pos, pb.hsize, curve_pts[num_interp - 1], curve_hsize[num_interp - 1]);
         }
         else
         {
-            int pos = elem.ID * bufferStride;
-            float size_half = elem.hsize;
-            buffer[pos + 8] = packPosition(size_half, -size_half);
-            buffer[pos + 9] = packPosition(-size_half, -size_half);
-            buffer[pos + 10] = packPosition(size_half, size_half);
-            buffer[pos + 11] = packPosition(-size_half, size_half);
+            fix_p0(pb.pos, pb.hsize);
+            (id_pb, xangle_pb) = append_p1(pb.pos, pb.hsize, pa.pos, pa.hsize);
         }
+        return (id_pb, xangle_pb);
     }
     void writeColorToBuffer(int index, Color color)
     {
@@ -337,6 +366,12 @@ public class StrokeStore
         custom[0] = packPosition(v0.X, v0.Y);
         custom[2] = packPosition(v2.X, v2.Y);
     }
+    void applyRightPatch(int id, float hs, float ext)
+    {
+        var custom = getCustom(id);
+        custom[0] = packPosition(ext, -hs);
+        custom[2] = packPosition(ext, hs);
+    }
     void appendInterpElement(Vector2 p, float hsize, Vector2 prev, float hsize_p, Vector2 next, float hsize_n)
     {
         var vec_p = p - prev;
@@ -411,93 +446,32 @@ public class StrokeStore
         return custom;
     }
 
-    int append_p1(Vector2 p, float hsize, Vector2 prev, float hsize_p, Vector2 next, bool shrink = false)
+    (int, float) append_p1(Vector2 p, float hsize, Vector2 prev, float hsize_p)
     {
         var vec_p = p - prev;
-        var vec_n = next - p;
         var angle_p = vec_p.Angle();
-        var angle_n = vec_n.Angle();
-
         var hsize_p_m = (hsize + hsize_p) / 2;
-
         var mag_p = vec_p.Length() / 2;
 
-        var ext = shrink ? 1 : hsize;
-
-        var v0 = new Vector2(ext, -ext).Rotated((angle_n - angle_p));
-        var v2 = new Vector2(ext, ext).Rotated((angle_n - angle_p));
-
         var custom = new float[4];
-        custom[0] = packPosition(v0.X, v0.Y);
-        custom[2] = packPosition(v2.X, v2.Y);
+        custom[0] = packPosition(0, -hsize);
+        custom[2] = packPosition(0, hsize);
         custom[1] = packPosition(-mag_p, -hsize_p_m);
         custom[3] = packPosition(-mag_p, hsize_p_m);
 
-        var p_elem = new StrokeElement(p, hsize, angle_p);
-
-
-        strokeState.p0_xdir = angle_p;
-
+        var elem = new StrokeElement(p, hsize, angle_p);
         var color = layer.setting.color;
         color.A = 1.0f;//use alpha as elem type
-
-        return insertStroke(p_elem, Transform2D.Identity.RotatedLocal(-angle_p), color, custom);
+        return (insertStroke(elem, Transform2D.Identity.RotatedLocal(-angle_p), color, custom), angle_p);
     }
-    //make line end between p0 p1
-    void fix_stroke_end()
+    void drawStrokeTailPatch(Vector2 p, float r, float s, int id)
     {
-        var p0 = strokeState.p0;
-        var p1 = strokeState.p1;
-        // p1 dir
-        var dir0 = strokeState.p0_dir;
-        var dir1 = (p1.pos - p0.pos).Angle();
-        var tailSize = p1.hsize / 2;
-        //try interpolate p0 p1
-        var dist_10 = p0.pos.DistanceTo(p1.pos);
-        if (dist_10 > p0.hsize + p1.hsize)
-        {
-            //interpolate
-            float space = Math.Max(distThreshold, p0.hsize);
-            int num_interp = Mathf.CeilToInt((dist_10 - p0.hsize - p1.hsize) / space);
-
-            var c_extend = dist_10 / 4;
-            var c0 = p0.pos + c_extend * Vector2.Right.Rotated(dir0);
-            var c1 = p1.pos - c_extend * Vector2.Right.Rotated(dir1);
-            var curve = new CubicCurve(p0.pos, c0, c1, p1.pos);
-            var curve_pts = new Vector2[num_interp];
-            var curve_hsize = new float[num_interp];
-
-
-            for (int i = 0; i < num_interp; i++)
-            {
-                var t = (i + 1f) / (num_interp + 1);
-                curve_pts[i] = curve.getPoint(t);
-                curve_hsize[i] = p0.hsize + (tailSize - p0.hsize) * t;
-            }
-            //fix p0
-            fix_p0(curve_pts[0], curve_hsize[0]);
-
-            if (curve_pts.Length > 1)
-            {
-                appendInterpElement(curve_pts[0], curve_hsize[0], p0.pos, p0.hsize, curve_pts[1], curve_hsize[1]);
-                for (int i = 1; i < num_interp - 1; i++)
-                {
-                    appendInterpElement(curve_pts[i], curve_hsize[i], curve_pts[i - 1], curve_hsize[i - 1], curve_pts[i + 1], curve_hsize[i + 1]);
-                }
-                appendInterpElement(curve_pts[num_interp - 1], curve_hsize[num_interp - 1], curve_pts[num_interp - 2], curve_hsize[num_interp - 2], p1.pos, tailSize);
-            }
-            else
-            {
-                appendInterpElement(curve_pts[0], curve_hsize[0], p0.pos, p0.hsize, p1.pos, tailSize);
-            }
-            append_p1(p1.pos, tailSize, curve_pts[num_interp - 1], curve_hsize[num_interp - 1], p1.pos * 2 - p0.pos);
-        }
-        else
-        {
-            //line
-            fix_p0(p1.pos, tailSize);
-            append_p1(p1.pos, tailSize, p0.pos, p0.hsize, p1.pos * 2 - p0.pos);
-        }
+        if (s < 0.5) return;
+        applyRightPatch(id, s, 0);
+        var elem = new StrokeElement(p, s, r);
+        var color = layer.setting.color;
+        color.A = 1.0f;
+        insertStroke(elem, Transform2D.Identity.RotatedLocal(-r), color, makeCustom_end(s));
     }
     float[] makeCustom_default(float hs)
     {
