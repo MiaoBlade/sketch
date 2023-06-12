@@ -21,7 +21,7 @@ public class CollideObject
 
     public List<int> results = new List<int>();
 
-    public CollideObject(StrokePatchCollider s, StrokePatchCollider e)
+    public CollideObject(StrokePoint s, StrokePoint e)
     {
         start = s.pos;
         end = e.pos;

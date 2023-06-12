@@ -294,7 +294,7 @@ public class StrokeStore
         collider.Clear();
         elemCount = 0;
     }
-    public void eraseCollide(StrokePatchCollider start, StrokePatchCollider end)
+    public void eraseCollide(StrokePoint start, StrokePoint end)
     {
         CollideObject co = new CollideObject(start, end);
         collider.Collide(co);

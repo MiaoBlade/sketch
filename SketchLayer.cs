@@ -16,7 +16,7 @@ public class SketchLayer
 
     public StrokeStore store;
 
-    StrokePatchCollider lastErase;
+    StrokePoint lastErase;
     public List<StrokePoint> points = new List<StrokePoint>();
     public SketchLayer()
     {
@@ -24,14 +24,14 @@ public class SketchLayer
     }
     public void beginErase(Vector2 vec, float size)
     {
-        lastErase = new StrokePatchCollider(toLocal(vec), size / 2, 0);
+        lastErase = new StrokePoint(toLocal(vec), size / 2);
     }
     public void endErase()
     {
     }
     public void appendErase(Vector2 vec, float size)
     {
-        StrokePatchCollider newErase = new StrokePatchCollider(toLocal(vec), size / 2, 0);
+        StrokePoint newErase = new StrokePoint(toLocal(vec), size / 2);
         store.eraseCollide(lastErase, newErase);
         lastErase = newErase;
     }
